@@ -24,6 +24,10 @@ app.add_middleware(
 
 
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "version": "1.0.0"}
+
 # Routers
 from backend.routers import profile, tablets, diet, study, activity, health, dashboard, insights, reflections, settings
 from backend.routers import sleep, mood, habits, goals, pomodoro, weekly, photos

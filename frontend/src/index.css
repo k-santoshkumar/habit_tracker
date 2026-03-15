@@ -4,34 +4,37 @@
 
 @layer base {
   :root {
-    --bg-color: #FFF8F0;
-    --text-color: #1A1207;
-    --primary: #0F6E56;
-    --accent: #D97706;
+    --bg-color: #F8FAFC;
+    --text-primary: #1E293B;
+    --text-secondary: #64748B;
+    --primary: #3B82F6;
+    --accent: #F59E0B;
     --card-bg: #FFFFFF;
-    --border-color: #F0E0CC;
+    --border-color: #F1F5F9;
   }
 
   .dark {
-    --bg-color: #1A1207;
-    --text-color: #FFF8F0;
-    --primary: #4ECFA8;
-    --accent: #FCD34D;
-    --card-bg: #2A1F10;
-    --border-color: #3D2F1A;
+    --bg-color: #0F172A;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --primary: #60A5FA;
+    --accent: #FCAA1A;
+    --card-bg: #1E293B;
+    --border-color: #334155;
   }
 
   body {
     background-color: var(--bg-color);
-    color: var(--text-color);
-    font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, sans-serif;
     margin: 0;
     padding: 0;
-    @apply transition-colors duration-200;
+    -webkit-tap-highlight-color: transparent;
+    @apply transition-colors duration-300;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-medium;
+    @apply font-semibold tracking-tight;
   }
 }
 
@@ -39,7 +42,15 @@
   .card {
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
-    @apply shadow-sm transition-all duration-150;
+    border-radius: 24px;
+    @apply shadow-premium transition-all duration-300;
+  }
+
+  .btn-primary {
+    @apply bg-primary-light text-white px-6 py-3 rounded-2xl font-semibold shadow-active hover:bg-primary transition-all active:scale-95 flex items-center justify-center gap-2;
+  }
+
+  .glass-nav {
+    @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800;
   }
 }

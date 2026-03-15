@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Plus, Check, Flame, Search, Loader2 } from 'lucide-react';
+import { Plus, Check, Flame, Search, Loader2, ChevronLeft, MoreHorizontal, Calendar } from 'lucide-react';
 import * as api from '../api/habits';
 import useLongPress from '../hooks/useLongPress';
 
@@ -10,11 +10,13 @@ export default function Habits() {
   const [logs, setLogs] = useState({});
   const [suggestions, setSuggestions] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [newHabit, setNewHabit] = useState('');
+  const [newHabit, setNewHabit] = useState({ name: '', description: '', days: ['Mo', 'Tu', 'We', 'Th', 'Fr'] });
   const [loading, setLoading] = useState(true);
 
+  const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
   const fetchData = async () => {
-    setLoading(true);
+    setLoading(setLoading && true);
     try {
       const [habitsRes, logsRes, suggRes] = await Promise.all([
         api.getHabits(),
@@ -36,10 +38,17 @@ export default function Habits() {
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    await api.createHabit({ name: newHabit });
-    setNewHabit('');
+    await api.createHabit({ name: newHabit.name, description: newHabit.description });
+    setNewHabit({ name: '', description: '', days: ['Mo', 'Tu', 'We', 'Th', 'Fr'] });
     setShowAdd(false);
     fetchData();
+  };
+
+  const toggleDay = (day) => {
+      setNewHabit(prev => ({
+          ...prev,
+          days: prev.days.includes(day) ? prev.days.filter(d => d !== day) : [...prev.days, day]
+      }));
   };
 
   const toggleHabit = async (habitId) => {
@@ -48,7 +57,7 @@ export default function Habits() {
   };
 
   const deleteHabit = async (habitId) => {
-    if (window.confirm("Delete this habit and all its progress?")) {
+    if (window.confirm("Delete this habit?")) {
         await api.deleteHabit(habitId);
         fetchData();
     }
@@ -57,78 +66,111 @@ export default function Habits() {
   const completedCount = habits.filter(h => logs[h.id]).length;
   const completionRate = habits.length > 0 ? Math.round((completedCount / habits.length) * 100) : 0;
 
-  const filtered = newHabit ? suggestions.filter(s => s.toLowerCase().includes(newHabit.toLowerCase())) : suggestions;
-
-  if (loading) return <div className="p-4 flex items-center justify-center min-h-[50vh]"><Loader2 className="animate-spin text-primary-light" /></div>;
+  if (loading) return <div className="p-4 flex items-center justify-center min-h-[50vh]"><Loader2 className="animate-spin text-primary" /></div>;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Habits</h1>
-        <button onClick={() => setShowAdd(true)} className="p-2 bg-primary-light text-white rounded-full hover:bg-primary-light/90 active:scale-95 transition-all">
-            <Plus size={20} />
-        </button>
+    <div className="space-y-8 animate-in fade-in duration-700 pb-24">
+      
+      {/* Header */}
+      <div className="flex justify-between items-center">
+          <div className="flex items-center gap-4">
+              <button className="p-1.5 rounded-full border border-slate-200 dark:border-slate-800 text-slate-500">
+                  <ChevronLeft size={18} />
+              </button>
+              <h1 className="text-xl font-bold">Habits</h1>
+          </div>
+          <button className="p-1.5 rounded-full border border-slate-200 dark:border-slate-800 text-slate-500">
+              <MoreHorizontal size={18} />
+          </button>
       </div>
 
-      <div className="card p-5 bg-gradient-to-r from-primary-light/10 to-accent-light/10 dark:from-primary-dark/10 dark:to-accent-dark/10 ring-1 ring-primary-light/10">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Today's Progress</div>
-            <div className="text-2xl font-bold text-slate-800 dark:text-slate-100">{completedCount} <span className="text-sm font-normal text-slate-400">/ {habits.length}</span></div>
-          </div>
-          <div className={`w-14 h-14 rounded-full border-4 flex items-center justify-center transition-all ${completionRate === 100 ? 'border-primary-light bg-primary-light/10' : 'border-primary-light/30'}`}>
-            <span className="text-sm font-bold text-primary-light">{completionRate}%</span>
-          </div>
+      {/* Progress Card */}
+      <div className="card p-6 flex items-center justify-between border-none bg-gradient-to-br from-primary to-blue-600 shadow-active text-white">
+        <div className="space-y-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Today's Progress</p>
+            <p className="text-3xl font-black">{completionRate}%</p>
+            <p className="text-xs font-bold opacity-70">{completedCount} of {habits.length} habits done</p>
         </div>
-        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
-          <div className="bg-primary-light h-full rounded-full transition-all duration-700 ease-out" style={{width: `${completionRate}%`}}></div>
-        </div>
-      </div>
-
-      {showAdd && (
-        <form className="card p-5 space-y-4 animate-in slide-in-from-top-4 duration-300" onSubmit={handleAdd}>
-          <h3 className="font-semibold text-lg">New Habit</h3>
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input required value={newHabit} onChange={e => setNewHabit(e.target.value)} placeholder="e.g., Read 30 mins" className="w-full pl-10 pr-3 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-primary-light/50 transition-all text-sm" />
-          </div>
-          {filtered.length > 0 && !habits.find(h => h.name === newHabit) && (
-            <div className="max-h-48 overflow-y-auto border border-slate-100 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 shadow-sm">
-              {filtered.slice(0, 8).map((s, i) => (
-                <div key={i} onClick={() => setNewHabit(s)} className={`px-4 py-3 text-sm cursor-pointer border-b last:border-b-0 border-slate-50 dark:border-slate-800 hover:bg-primary-light/5 transition-colors ${newHabit === s ? 'text-primary-light font-semibold' : ''}`}>
-                  {s}
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setShowAdd(false)} className="px-5 py-2 text-sm font-medium text-slate-500">Cancel</button>
-            <button type="submit" className="px-6 py-2 bg-primary-light text-white rounded-xl text-sm font-semibold shadow-lg shadow-primary-light/20 hover:opacity-90">Add Habit</button>
-          </div>
-        </form>
-      )}
-
-      {habits.length === 0 && !showAdd && (
-        <div className="card p-10 text-center bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700">
-          <div className="w-16 h-16 bg-accent-light/10 text-accent-light rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="p-4 bg-white/20 rounded-[24px]">
             <Flame size={32} />
-          </div>
-          <p className="text-slate-500 mb-6 font-medium">Build daily habits that stick. Start with one simple task.</p>
-          <button onClick={() => setShowAdd(true)} className="px-6 py-2.5 bg-primary-light text-white rounded-xl text-sm font-semibold shadow-lg shadow-primary-light/20">Create My First Habit</button>
         </div>
-      )}
-
-      <div className="grid gap-3">
-        {habits.map(h => (
-            <HabitItem 
-                key={h.id} 
-                habit={h} 
-                done={logs[h.id] || false} 
-                onToggle={() => toggleHabit(h.id)} 
-                onDelete={() => deleteHabit(h.id)} 
-            />
-        ))}
       </div>
+
+      {/* Habits List */}
+      <div className="space-y-4">
+          <div className="flex justify-between items-center px-1">
+              <h3 className="section-title">Active Habits</h3>
+              <button onClick={() => setShowAdd(true)} className="p-1.5 bg-slate-100 dark:bg-slate-800 text-primary rounded-xl active:scale-95 transition-all">
+                  <Plus size={20} />
+              </button>
+          </div>
+          <div className="grid gap-3">
+              {habits.map(h => (
+                  <HabitItem 
+                      key={h.id} 
+                      habit={h} 
+                      done={logs[h.id] || false} 
+                      onToggle={() => toggleHabit(h.id)} 
+                      onDelete={() => deleteHabit(h.id)} 
+                  />
+              ))}
+              {habits.length === 0 && (
+                  <div className="text-center py-10 text-slate-400 italic font-medium">No habits yet. Click + to start.</div>
+              )}
+          </div>
+      </div>
+
+      {/* Add Task Modal overlay (Reference Style) */}
+      {showAdd && (
+          <div className="fixed inset-0 z-50 bg-white dark:bg-slate-900 animate-in slide-in-from-bottom duration-500 overflow-y-auto">
+              <div className="p-6 max-w-lg mx-auto space-y-8 pb-32">
+                  <div className="flex justify-between items-center">
+                      <button onClick={() => setShowAdd(false)} className="p-2 -ml-2 text-slate-500"><ChevronLeft size={24} /></button>
+                      <h2 className="text-xl font-black">Add a task</h2>
+                      <button className="p-2 -mr-2 text-slate-500"><MoreHorizontal size={24} /></button>
+                  </div>
+
+                  <form className="space-y-8" onSubmit={handleAdd}>
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Habit name</label>
+                          <input required autoFocus placeholder="Enter habit title" value={newHabit.name} onChange={e => setNewHabit({...newHabit, name: e.target.value})} className="w-full p-4 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:border-primary transition-all font-semibold" />
+                      </div>
+
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Write a short description</label>
+                          <textarea placeholder="Tell yourself why this matters..." value={newHabit.description} onChange={e => setNewHabit({...newHabit, description: e.target.value})} className="w-full p-4 border border-slate-200 dark:border-slate-800 rounded-2xl outline-none focus:border-primary transition-all font-medium min-h-[100px]" />
+                      </div>
+
+                      <div className="space-y-4">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Repeat</label>
+                          <div className="flex justify-between">
+                              {days.map(d => (
+                                  <button key={d} type="button" onClick={() => toggleDay(d)} className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${newHabit.days.includes(d) ? 'bg-primary border-primary text-white' : 'border-slate-100 dark:border-slate-800 text-slate-400'}`}>
+                                      {d}
+                                  </button>
+                              ))}
+                          </div>
+                      </div>
+
+                      <div className="space-y-4">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Set date</label>
+                          <div className="card p-4 flex items-center justify-between border-slate-100">
+                             <div className="flex items-center gap-3">
+                                 <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-primary rounded-lg font-bold text-[10px]">Starting date</div>
+                             </div>
+                             <div className="rotate-90 md:rotate-0 text-slate-300">→</div>
+                             <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-400 uppercase">Ending date</div>
+                          </div>
+                      </div>
+
+                      <div className="fixed bottom-0 inset-x-0 p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex gap-4">
+                          <button type="button" onClick={() => setShowAdd(false)} className="flex-1 p-4 rounded-2xl font-black text-slate-400 border border-slate-200 dark:border-slate-800 active:scale-95 transition-all">Cancel</button>
+                          <button type="submit" className="flex-1 btn-primary p-4 rounded-2xl font-black bg-primary text-white shadow-active active:scale-95 transition-all">Save</button>
+                      </div>
+                  </form>
+              </div>
+          </div>
+      )}
     </div>
   );
 }
@@ -143,18 +185,29 @@ function HabitItem({ habit, done, onToggle, onDelete }) {
     return (
         <div 
             {...longPressProps}
-            className={`card p-4 flex items-center gap-4 transition-all select-none cursor-pointer active:scale-[0.98] border-2 ${
-                done ? 'bg-primary-light/5 border-primary-light/20' : 'border-transparent'
-            }`}
+            className={`card p-4 flex items-center justify-between transition-all active:scale-[0.98] ${done ? 'opacity-60 bg-slate-50/50 dark:bg-slate-800/50' : ''}`}
         >
-            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                done ? 'bg-primary-light border-primary-light text-white rotate-0' : 'border-slate-300 dark:border-slate-600'
-            }`}>
-                {done && <Check size={16} className="animate-in zoom-in duration-300" />}
+            <div className="flex items-center gap-4">
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                    done ? 'bg-primary border-primary text-white' : 'border-slate-200 dark:border-slate-700 font-bold text-[8px] text-slate-300'
+                }`}>
+                    {done && <Check size={14} />}
+                </div>
+                <div>
+                  <span className={`font-bold text-sm ${done ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-slate-100'}`}>
+                      {habit.name}
+                  </span>
+                  {habit.description && !done && (
+                      <p className="text-[10px] text-slate-400 mt-0.5 font-medium line-clamp-1">{habit.description}</p>
+                  )}
+                </div>
             </div>
-            <span className={`font-semibold text-sm transition-all duration-300 ${done ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'}`}>
-                {habit.name}
-            </span>
+            <div className="flex gap-1">
+                {['Mo','Tu','We'].map(d => (
+                    <div key={d} className="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+                ))}
+                <div className="w-1.5 h-1.5 rounded-full bg-primary/30"></div>
+            </div>
         </div>
     );
 }

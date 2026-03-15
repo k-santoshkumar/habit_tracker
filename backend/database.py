@@ -1,16 +1,20 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import declarative_base
+import os
+from motor.motor_asyncio import AsyncIOMotorClient
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from datetime import datetime
 
-SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./health_tracker.db"
+import certifi
 
-engine = create_async_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+MONGODB_URL = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
+DB_NAME = "health_tracker"
 
-SessionLocal = async_sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession)
-
-Base = declarative_base()
+client = AsyncIOMotorClient(MONGODB_URL, tlsCAFile=certifi.where())
+db = client[DB_NAME]
 
 async def get_db():
-    async with SessionLocal() as session:
-        yield session
+    return db
+
+# Helper to get specific collections
+def get_collection(name: str):
+    return db[name]

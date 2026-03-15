@@ -1,45 +1,28 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
-from backend.database import get_db
-from backend.models import PhotoEntry
+from fastapi import APIRouter
+from backend.database import db
+from backend.schemas import PhotoLog as PhotoLogSchema, PhotoLogCreate
+from bson import ObjectId
 
 router = APIRouter()
 
-@router.get("/")
-async def get_photos(db: AsyncSession = Depends(get_db)):
-    query = await db.execute(select(PhotoEntry).order_by(PhotoEntry.date.desc(), PhotoEntry.created_at.desc()))
-    photos = query.scalars().all()
-    return {"success": True, "data": [
-        {"id": p.id, "date": p.date, "image_data": p.image_data, 
-         "caption": p.caption, "created_at": p.created_at.isoformat()}
-        for p in photos
-    ]}
+def fix_id(obj):
+    if obj and "_id" in obj:
+        obj["id"] = str(obj["_id"])
+    return obj
+
+@router.get("/{date_str}")
+async def get_photos(date_str: str):
+    photos = await db.photos.find({"date": date_str}).to_list(length=100)
+    return {"success": True, "data": [PhotoLogSchema(**fix_id(p)) for p in photos]}
 
 @router.post("/")
-async def save_photo(data: dict, db: AsyncSession = Depends(get_db)):
-    if "date" not in data or "image_data" not in data:
-        raise HTTPException(status_code=400, detail="Missing date or image_data")
-        
-    new_photo = PhotoEntry(
-        date=data["date"],
-        image_data=data["image_data"],
-        caption=data.get("caption", "")
-    )
-    db.add(new_photo)
-    await db.commit()
-    await db.refresh(new_photo)
-    
-    return {"success": True, "data": {
-        "id": new_photo.id, "date": new_photo.date, 
-        "image_data": new_photo.image_data, "caption": new_photo.caption
-    }}
+async def upload_photo(photo: PhotoLogCreate):
+    data = photo.model_dump()
+    res = await db.photos.insert_one(data)
+    data["id"] = str(res.inserted_id)
+    return {"success": True, "data": PhotoLogSchema(**data)}
 
 @router.delete("/{photo_id}")
-async def delete_photo(photo_id: int, db: AsyncSession = Depends(get_db)):
-    query = await db.execute(select(PhotoEntry).filter(PhotoEntry.id == photo_id))
-    photo = query.scalars().first()
-    if photo:
-        await db.delete(photo)
-        await db.commit()
-    return {"success": True}
+async def delete_photo(photo_id: str):
+    await db.photos.delete_one({"_id": ObjectId(photo_id)})
+    return {"success": True, "data": None}

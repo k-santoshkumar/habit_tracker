@@ -4,25 +4,34 @@ import * as api from '../api/health';
 export function useHealth() {
     const [metrics, setMetrics] = useState([]);
     const [entries, setEntries] = useState({});
+    const [presets, setPresets] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const res = await api.getHealthMetrics();
-            if (res.data.success) {
-                const fetchedMetrics = res.data.data;
-                setMetrics(fetchedMetrics);
-                
-                // Fetch entries for all metrics
-                const entryData = {};
-                for (const m of fetchedMetrics) {
-                    const eRes = await api.getMetricEntries(m.id);
-                    if (eRes.data.success) {
-                        entryData[m.id] = eRes.data.data;
-                    }
-                }
-                setEntries(entryData);
+            const [metricsRes, entriesRes, presetsRes] = await Promise.all([
+                api.getHealthMetrics(),
+                api.getMetricEntries(),
+                api.getHealthPresets()
+            ]);
+            
+            if (metricsRes.data.success) {
+                setMetrics(metricsRes.data.data);
+            }
+            
+            if (entriesRes.data.success) {
+                const allEntries = entriesRes.data.data;
+                const entryMap = {};
+                allEntries.forEach(e => {
+                    if (!entryMap[e.metric_id]) entryMap[e.metric_id] = [];
+                    entryMap[e.metric_id].push(e);
+                });
+                setEntries(entryMap);
+            }
+            
+            if (presetsRes.data.success) {
+                setPresets(presetsRes.data.data);
             }
         } catch (e) {
             console.error(e);
@@ -49,5 +58,13 @@ export function useHealth() {
         }
     };
 
-    return { metrics, entries, loading, addMetric, logEntry, refetch: fetchData };
+    return { 
+        metrics, 
+        entries, 
+        presets, 
+        loading, 
+        addMetric, 
+        logEntry, 
+        refetch: fetchData 
+    };
 }

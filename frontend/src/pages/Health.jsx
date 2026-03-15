@@ -4,32 +4,12 @@ import { format } from 'date-fns';
 import { Plus, Activity as ActivityIcon, Search } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
-const HEALTH_PRESETS = [
-  { name: 'Weight', unit: 'kg', min_range: 40, max_range: 150 },
-  { name: 'Blood Pressure (Systolic)', unit: 'mmHg', min_range: 90, max_range: 140 },
-  { name: 'Blood Pressure (Diastolic)', unit: 'mmHg', min_range: 60, max_range: 90 },
-  { name: 'Heart Rate (Resting)', unit: 'bpm', min_range: 50, max_range: 100 },
-  { name: 'Blood Sugar (Fasting)', unit: 'mg/dL', min_range: 70, max_range: 110 },
-  { name: 'Blood Sugar (Post-meal)', unit: 'mg/dL', min_range: 70, max_range: 180 },
-  { name: 'HbA1c', unit: '%', min_range: 4.0, max_range: 6.5 },
-  { name: 'Cholesterol (Total)', unit: 'mg/dL', min_range: 100, max_range: 200 },
-  { name: 'HDL Cholesterol', unit: 'mg/dL', min_range: 40, max_range: 80 },
-  { name: 'LDL Cholesterol', unit: 'mg/dL', min_range: 50, max_range: 130 },
-  { name: 'Triglycerides', unit: 'mg/dL', min_range: 50, max_range: 150 },
-  { name: 'BMI', unit: 'kg/m2', min_range: 18.5, max_range: 25 },
-  { name: 'Body Fat', unit: '%', min_range: 8, max_range: 30 },
-  { name: 'Waist Circumference', unit: 'cm', min_range: 60, max_range: 100 },
-  { name: 'SpO2', unit: '%', min_range: 95, max_range: 100 },
-  { name: 'Temperature', unit: 'F', min_range: 97, max_range: 99.5 },
-  { name: 'Creatinine', unit: 'mg/dL', min_range: 0.6, max_range: 1.2 },
-  { name: 'Hemoglobin', unit: 'g/dL', min_range: 12, max_range: 17 },
-  { name: 'Vitamin D', unit: 'ng/mL', min_range: 30, max_range: 80 },
-  { name: 'TSH', unit: 'mIU/L', min_range: 0.4, max_range: 4.0 },
-];
+// Health presets moved to MongoDB
+
 
 export default function Health() {
   const [date] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const { metrics, entries, loading, addMetric, logEntry } = useHealth();
+  const { metrics, entries, presets, loading, addMetric, logEntry } = useHealth();
   const [showAddMetric, setShowAddMetric] = useState(false);
   const [metricSearch, setMetricSearch] = useState('');
   const [presetSelected, setPresetSelected] = useState(false);
@@ -39,8 +19,8 @@ export default function Health() {
   const [newEntryVal, setNewEntryVal] = useState('');
 
   const filteredPresets = metricSearch
-    ? HEALTH_PRESETS.filter(p => p.name.toLowerCase().includes(metricSearch.toLowerCase()))
-    : HEALTH_PRESETS;
+    ? presets.filter(p => p.name.toLowerCase().includes(metricSearch.toLowerCase()))
+    : presets;
 
   const handleSelectPreset = (preset) => {
     setNewMetric({

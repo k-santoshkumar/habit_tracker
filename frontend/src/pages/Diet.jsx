@@ -4,86 +4,12 @@ import { format } from 'date-fns';
 import { Droplet, Plus, Check, Search, Camera, Image as ImageIcon, X } from 'lucide-react';
 import { useRef } from 'react';
 
-const MEAL_CATEGORIES = ['Breakfast', 'Lunch', 'Dinner', 'Morning Snack', 'Afternoon Snack', 'Post-Workout'];
+// Hardcoded values moved to Backend MongoDB
 
-const FOOD_DATABASE = {
-  'Breakfast': [
-    { name: 'Oatmeal', protein: 6 },
-    { name: 'Eggs & Toast', protein: 18 },
-    { name: 'Pancakes', protein: 8 },
-    { name: 'Greek Yogurt Bowl', protein: 15 },
-    { name: 'Avocado Toast', protein: 7 },
-    { name: 'Smoothie Bowl', protein: 12 },
-    { name: 'Cereal & Milk', protein: 8 },
-    { name: 'Fruit Bowl', protein: 2 },
-    { name: 'Peanut Butter Toast', protein: 10 },
-    { name: 'Idli Sambar', protein: 6 },
-    { name: 'Poha', protein: 4 },
-    { name: 'Paratha & Curd', protein: 6 },
-    { name: 'Upma', protein: 5 },
-    { name: 'Dosa & Chutney', protein: 4 },
-  ],
-  'Lunch': [
-    { name: 'Chicken Breast & Rice', protein: 40 },
-    { name: 'Grilled Fish & Salad', protein: 35 },
-    { name: 'Lentil Stew (Dal)', protein: 18 },
-    { name: 'Paneer Curry & Roti', protein: 22 },
-    { name: 'Turkey Sandwich', protein: 28 },
-    { name: 'Veggie Wrap', protein: 12 },
-    { name: 'Quinoa Bowl', protein: 14 },
-    { name: 'Pasta Primavera', protein: 15 },
-    { name: 'Burrito Bowl', protein: 30 },
-    { name: 'Rajma Rice', protein: 15 },
-    { name: 'Chole & Rice', protein: 14 },
-    { name: 'Dal & Rice', protein: 12 },
-    { name: 'Chicken Biryani', protein: 20 },
-    { name: 'Tofu Stir-fry & Rice', protein: 20 },
-  ],
-  'Dinner': [
-    { name: 'Grilled Salmon', protein: 38 },
-    { name: 'Steak & Potatoes', protein: 42 },
-    { name: 'Chicken Tikka', protein: 35 },
-    { name: 'Fish & Veggies', protein: 30 },
-    { name: 'Tofu Stir-fry', protein: 20 },
-    { name: 'Pasta Bolognese', protein: 15 },
-    { name: 'Soup & Bread', protein: 10 },
-    { name: 'Palak Paneer & Naan', protein: 18 },
-    { name: 'Egg Curry & Rice', protein: 16 },
-    { name: 'Grilled Chicken Salad', protein: 32 },
-    { name: 'Shrimp Stir-fry', protein: 28 },
-    { name: 'Daal Makhani & Roti', protein: 14 },
-  ],
-  'Morning Snack': [
-    { name: 'Protein Bar', protein: 20 },
-    { name: 'Almonds (30g)', protein: 6 },
-    { name: 'Apple & Peanut Butter', protein: 7 },
-    { name: 'Boiled Eggs (2)', protein: 12 },
-    { name: 'Trail Mix', protein: 8 },
-    { name: 'Banana', protein: 1 },
-    { name: 'Cheese & Crackers', protein: 10 },
-  ],
-  'Afternoon Snack': [
-    { name: 'Greek Yogurt', protein: 15 },
-    { name: 'Hummus & Veggies', protein: 6 },
-    { name: 'Protein Shake', protein: 25 },
-    { name: 'Mixed Nuts', protein: 7 },
-    { name: 'Fruit Salad', protein: 2 },
-    { name: 'Makhana (Fox Nuts)', protein: 4 },
-    { name: 'Roasted Chana', protein: 10 },
-  ],
-  'Post-Workout': [
-    { name: 'Whey Protein Shake', protein: 30 },
-    { name: 'Chicken Wrap', protein: 28 },
-    { name: 'Eggs & Bread', protein: 18 },
-    { name: 'Banana & Whey Shake', protein: 27 },
-    { name: 'BCAA Drink', protein: 0 },
-    { name: 'Paneer Tikka', protein: 22 },
-  ],
-};
 
 export default function Diet() {
   const [date] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const { slots, mealLogs, waterLog, loading, logMeal, addWater, addSlot } = useDiet(date);
+  const { slots, mealLogs, waterLog, categories, foodItems, loading, logMeal, addWater, addSlot } = useDiet(date);
   const [showAdd, setShowAdd] = useState(false);
   
   // Two-step form state
@@ -105,7 +31,7 @@ export default function Diet() {
   // Get filtered food items based on category and search text
   const getFilteredItems = () => {
     if (!selectedCategory) return [];
-    const items = FOOD_DATABASE[selectedCategory] || [];
+    const items = foodItems.filter(i => i.category === selectedCategory);
     if (!foodSearch) return items;
     return items.filter(item => item.name.toLowerCase().includes(foodSearch.toLowerCase()));
   };
@@ -214,7 +140,7 @@ export default function Diet() {
               <div>
                   <label className="block text-xs text-slate-500 mb-2 font-medium">Meal Category</label>
                   <div className="grid grid-cols-3 gap-2">
-                      {MEAL_CATEGORIES.map(cat => (
+                      {categories.map(cat => (
                           <button
                               key={cat}
                               type="button"

@@ -1,51 +1,24 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from backend.database import get_db
-from backend.models import PomodoroSession
+from fastapi import APIRouter
+from backend.database import db
+from backend.schemas import PomodoroSession as PomodoroSessionSchema, PomodoroSessionCreate
+from bson import ObjectId
 
 router = APIRouter()
 
-@router.get("/sessions/{date_str}")
-async def get_sessions(date_str: str, db: AsyncSession = Depends(get_db)):
-    query = await db.execute(select(PomodoroSession).filter(PomodoroSession.date == date_str).order_by(PomodoroSession.created_at.desc()))
-    sessions = query.scalars().all()
-    return {"success": True, "data": [
-        {"id": s.id, "date": s.date, "duration_min": s.duration_min,
-         "break_min": s.break_min, "label": s.label, "completed": s.completed}
-        for s in sessions
-    ]}
+def fix_id(obj):
+    if obj and "_id" in obj:
+        obj["id"] = str(obj["_id"])
+    return obj
+
+@router.get("/sessions")
+async def get_sessions():
+    sessions = await db.pomodoro_sessions.find().sort("created_at", -1).to_list(length=100)
+    return {"success": True, "data": [PomodoroSessionSchema(**fix_id(s)) for s in sessions]}
 
 @router.post("/sessions")
-async def log_session(data: dict, db: AsyncSession = Depends(get_db)):
-    session = PomodoroSession(
-        date=data["date"], duration_min=data.get("duration_min", 25),
-        break_min=data.get("break_min", 5), label=data.get("label"),
-        completed=data.get("completed", True)
-    )
-    db.add(session)
-    await db.commit()
-    await db.refresh(session)
-    return {"success": True, "data": {"id": session.id}}
-
-@router.get("/stats")
-async def get_pomodoro_stats(db: AsyncSession = Depends(get_db)):
-    # Total sessions
-    total_q = await db.execute(select(func.count(PomodoroSession.id)).filter(PomodoroSession.completed == True))
-    total = total_q.scalar() or 0
-    
-    # Total minutes
-    mins_q = await db.execute(select(func.sum(PomodoroSession.duration_min)).filter(PomodoroSession.completed == True))
-    total_mins = mins_q.scalar() or 0
-    
-    # Today's sessions
-    from datetime import date
-    today = str(date.today())
-    today_q = await db.execute(select(func.count(PomodoroSession.id)).filter(
-        PomodoroSession.completed == True, PomodoroSession.date == today
-    ))
-    today_count = today_q.scalar() or 0
-    
-    return {"success": True, "data": {
-        "total_sessions": total, "total_minutes": total_mins, "today_sessions": today_count
-    }}
+async def create_session(session: PomodoroSessionCreate):
+    data = session.model_dump()
+    data["created_at"] = data.get("created_at") or None # MongoDB will handle if null or use datetime.now() if we set it in logic
+    res = await db.pomodoro_sessions.insert_one(data)
+    data["id"] = str(res.inserted_id)
+    return {"success": True, "data": PomodoroSessionSchema(**data)}

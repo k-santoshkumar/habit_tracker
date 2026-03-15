@@ -3,12 +3,12 @@ from typing import List, Optional
 from datetime import datetime
 
 class ProfileBase(BaseModel):
-    name: str
-    dob: str
-    weight_kg: float
-    height_cm: float
+    name: str = ""
+    dob: str = ""
+    weight_kg: float = 0.0
+    height_cm: float = 0.0
     condition_notes: Optional[str] = None
-    start_date: str
+    start_date: str = ""
     push_notifications_enabled: bool = False
     morning_summary_time: str = "08:00"
     bedtime_prompt_time: str = "20:00"
@@ -21,7 +21,7 @@ class ProfileCreate(ProfileBase):
     pass
 
 class Profile(ProfileBase):
-    id: int
+    id: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -37,21 +37,20 @@ class TabletCreate(TabletBase):
     pass
 
 class Tablet(TabletCreate):
-    id: int
-    
+    id: Optional[str] = None
     class Config:
         from_attributes = True
 
 class TabletLogBase(BaseModel):
     date: str
-    tablet_id: int
+    tablet_id: str
     status: str
 
 class TabletLogCreate(TabletLogBase):
     pass
 
 class TabletLog(TabletLogBase):
-    id: int
+    id: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -65,13 +64,13 @@ class MealSlotCreate(MealSlotBase):
     pass
 
 class MealSlot(MealSlotBase):
-    id: int
+    id: Optional[str] = None
     class Config:
         from_attributes = True
 
 class MealLogBase(BaseModel):
     date: str
-    meal_slot_id: int
+    meal_slot_id: str
     checked: bool
     proof_image: Optional[str] = None
 
@@ -79,7 +78,7 @@ class MealLogCreate(MealLogBase):
     pass
 
 class MealLog(MealLogBase):
-    id: int
+    id: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -91,7 +90,7 @@ class WaterLogCreate(WaterLogBase):
     pass
 
 class WaterLog(WaterLogBase):
-    id: int
+    id: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -104,12 +103,12 @@ class StudyTrackCreate(StudyTrackBase):
     pass
 
 class StudyTrack(StudyTrackBase):
-    id: int
+    id: Optional[str] = None
     class Config:
         from_attributes = True
 
 class StudyTopicBase(BaseModel):
-    track_id: int
+    track_id: str
     name: str
     status: str = "In Progress"
 
@@ -117,7 +116,7 @@ class StudyTopicCreate(StudyTopicBase):
     pass
 
 class StudyTopic(StudyTopicBase):
-    id: int
+    id: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -128,20 +127,20 @@ class StudyHabitCreate(StudyHabitBase):
     pass
 
 class StudyHabit(StudyHabitBase):
-    id: int
+    id: Optional[str] = None
     class Config:
         from_attributes = True
 
 class HabitLogBase(BaseModel):
     date: str
-    habit_id: int
+    habit_id: str
     checked: bool
 
 class HabitLogCreate(HabitLogBase):
     pass
 
 class HabitLog(HabitLogBase):
-    id: int
+    id: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -155,13 +154,13 @@ class ActivityTypeCreate(ActivityTypeBase):
     pass
 
 class ActivityType(ActivityTypeBase):
-    id: int
+    id: Optional[str] = None
     class Config:
         from_attributes = True
 
 class ActivityLogBase(BaseModel):
     date: str
-    activity_type_id: int
+    activity_type_id: str
     done: bool
     duration_min: Optional[int] = None
     intensity: Optional[str] = None
@@ -172,7 +171,7 @@ class ActivityLogCreate(ActivityLogBase):
     pass
 
 class ActivityLog(ActivityLogBase):
-    id: int
+    id: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -186,13 +185,13 @@ class HealthMetricCreate(HealthMetricBase):
     pass
 
 class HealthMetric(HealthMetricBase):
-    id: int
+    id: Optional[str] = None
     class Config:
         from_attributes = True
 
 class MetricEntryBase(BaseModel):
     date: str
-    metric_id: int
+    metric_id: str
     value: float
     notes: Optional[str] = None
 
@@ -200,7 +199,7 @@ class MetricEntryCreate(MetricEntryBase):
     pass
 
 class MetricEntry(MetricEntryBase):
-    id: int
+    id: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -213,19 +212,82 @@ class ReflectionCreate(ReflectionBase):
     pass
 
 class Reflection(ReflectionBase):
-    id: int
-    created_at: datetime
+    id: Optional[str] = None
+    created_at: Optional[datetime] = None
     class Config:
         from_attributes = True
 
-class InsightBase(BaseModel):
+class MoodEntryBase(BaseModel):
     date: str
-    insight_type: str
-    insight_text: str
-    acted_on: int = 0
+    mood: int = 3
+    energy: int = 3
+    stress: int = 3
+    notes: Optional[str] = None
 
-class Insight(InsightBase):
-    id: int
-    created_at: datetime
+class MoodEntryCreate(MoodEntryBase):
+    pass
+
+class MoodEntry(MoodEntryBase):
+    id: Optional[str] = None
+    class Config:
+        from_attributes = True
+
+class SleepLogBase(BaseModel):
+    date: str
+    sleep_time: str
+    wake_time: str
+    quality: int = 3
+    duration_min: int = 0
+    notes: Optional[str] = None
+
+class SleepLogCreate(SleepLogBase):
+    pass
+
+class SleepLog(SleepLogBase):
+    id: Optional[str] = None
+    class Config:
+        from_attributes = True
+
+class PomodoroSessionBase(BaseModel):
+    date: str
+    duration_min: int = 25
+    break_min: int = 5
+    label: Optional[str] = None
+    completed: bool = False
+
+class PomodoroSessionCreate(PomodoroSessionBase):
+    pass
+
+class PomodoroSession(PomodoroSessionBase):
+    id: Optional[str] = None
+    created_at: Optional[datetime] = None
+    class Config:
+        from_attributes = True
+
+class PhotoLogBase(BaseModel):
+    date: str
+    image_data: str # base64
+    caption: Optional[str] = None
+
+class PhotoLogCreate(PhotoLogBase):
+    pass
+
+class PhotoLog(PhotoLogBase):
+    id: Optional[str] = None
+    class Config:
+        from_attributes = True
+
+class HabitBase(BaseModel):
+    name: str
+    icon: str = "Check"
+    color: str = "teal"
+    frequency: str = "daily"
+    target_days: Optional[str] = None
+
+class HabitCreate(HabitBase):
+    pass
+
+class Habit(HabitBase):
+    id: Optional[str] = None
     class Config:
         from_attributes = True

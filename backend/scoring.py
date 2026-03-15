@@ -1,25 +1,22 @@
 from datetime import date as dt_date
-from sqlalchemy import select, and_
-from sqlalchemy.ext.asyncio import AsyncSession
-from backend.models import DailyScore, Tablet, TabletLog, MealSlot, MealLog, WaterLog, StudyTopic, StudyHabit, HabitLog, ActivityLog
+from backend.database import db
+import json
 
-async def calculate_daily_score(date_str: str, db: AsyncSession):
+async def calculate_daily_score(date_str: str):
     categories = []
 
     # 1. Tablets
-    query_tablets = await db.execute(select(Tablet))
-    tablets = query_tablets.scalars().all()
+    tablets = await db.tablets.find().to_list(length=100)
     if tablets:
         tablet_count = len(tablets)
-        critical_count = sum(1 for t in tablets if t.critical)
+        critical_count = sum(1 for t in tablets if t.get("critical", False))
         normal_count = tablet_count - critical_count
         
-        query_logs = await db.execute(select(TabletLog).filter(TabletLog.date == date_str))
-        logs = query_logs.scalars().all()
-        log_map = {log.tablet_id: log.status for log in logs}
+        logs = await db.tablet_logs.find({"date": date_str}).to_list(length=100)
+        log_map = {str(log["tablet_id"]): log["status"] for log in logs}
         
-        critical_taken = sum(1 for t in tablets if t.critical and log_map.get(t.id) in ["Taken", "Taken late"])
-        normal_taken = sum(1 for t in tablets if not t.critical and log_map.get(t.id) in ["Taken", "Taken late"])
+        critical_taken = sum(1 for t in tablets if t.get("critical") and log_map.get(str(t["_id"])) in ["Taken", "Taken late"])
+        normal_taken = sum(1 for t in tablets if not t.get("critical") and log_map.get(str(t["_id"])) in ["Taken", "Taken late"])
         
         denominator = (critical_count * 2) + normal_count
         if denominator > 0:
@@ -27,49 +24,35 @@ async def calculate_daily_score(date_str: str, db: AsyncSession):
             categories.append(('tablets', tablet_score))
 
     # 2. Meals
-    query_meals = await db.execute(select(MealSlot))
-    meals = query_meals.scalars().all()
-    if meals:
-        total_meals = len(meals)
-        query_meal_logs = await db.execute(select(MealLog).filter(MealLog.date == date_str, MealLog.checked == True))
-        meals_done = len(query_meal_logs.scalars().all())
+    total_meals = await db.meal_slots.count_documents({})
+    if total_meals > 0:
+        meals_done = await db.meal_logs.count_documents({"date": date_str, "checked": True})
         categories.append(('meals', meals_done / total_meals))
 
     # 3. Water
-    from backend.models import Profile
-    profile_query = await db.execute(select(Profile).limit(1))
-    profile = profile_query.scalars().first()
-    if profile and profile.water_target_ml > 0:
-        query_water = await db.execute(select(WaterLog).filter(WaterLog.date == date_str))
-        water_log = query_water.scalars().first()
-        water_ml = water_log.amount_ml if water_log else 0
-        water_score = min(water_ml / profile.water_target_ml, 1.0)
+    profile = await db.profiles.find_one()
+    if profile and profile.get("water_target_ml", 0) > 0:
+        water_log = await db.water_logs.find_one({"date": date_str})
+        water_ml = water_log["amount_ml"] if water_log else 0
+        water_score = min(water_ml / profile["water_target_ml"], 1.0)
         categories.append(('water', water_score))
 
     # 4. Study
-    query_topics = await db.execute(select(StudyTopic).filter(StudyTopic.status == "In Progress"))
-    active_topics = query_topics.scalars().all()
-    query_habits = await db.execute(select(StudyHabit))
-    habits = query_habits.scalars().all()
+    active_topics_count = await db.study_topics.count_documents({"status": "In Progress"})
+    habits_count = await db.study_habits.count_documents({})
     
-    if active_topics or habits:
-        # Assuming topics marked "Done" today aren't simply "In Progress", we may need a better way to track topics done today. 
-        # For simplicity, let's just use HabitLogs and an assumption or a general score modifier
-        query_habit_logs = await db.execute(select(HabitLog).filter(HabitLog.date == date_str, HabitLog.checked == True))
-        done_habits = len(query_habit_logs.scalars().all())
-        total_possible = min(len(active_topics) + len(habits), 5)
+    if active_topics_count or habits_count:
+        done_habits = await db.study_habit_logs.count_documents({"date": date_str, "checked": True})
+        total_possible = min(active_topics_count + habits_count, 5)
         if total_possible > 0:
             study_score = min(done_habits / total_possible, 1.0)
             categories.append(('study', study_score))
 
     # 5. Activity
-    from backend.models import ActivityType
-    query_act_types = await db.execute(select(ActivityType))
-    act_types = query_act_types.scalars().all()
-    if act_types:
-        query_act_logs = await db.execute(select(ActivityLog).filter(ActivityLog.date == date_str, ActivityLog.done == True))
-        act_logs = query_act_logs.scalars().all()
-        categories.append(('activity', 1.0 if act_logs else 0.0))
+    act_types_count = await db.activity_types.count_documents({})
+    if act_types_count > 0:
+        act_logs_count = await db.activity_logs.count_documents({"date": date_str, "done": True})
+        categories.append(('activity', 1.0 if act_logs_count > 0 else 0.0))
 
     if not categories:
         return 0, {}
@@ -80,23 +63,25 @@ async def calculate_daily_score(date_str: str, db: AsyncSession):
     breakdown = {name: round(score * 100) for name, score in categories}
     return round(total), breakdown
 
-async def update_daily_score(date_str: str, db: AsyncSession):
-    score_val, breakdown = await calculate_daily_score(date_str, db)
+async def update_daily_score(date_str: str):
+    score_val, breakdown = await calculate_daily_score(date_str)
     
-    query = await db.execute(select(DailyScore).filter(DailyScore.date == date_str))
-    ds = query.scalars().first()
+    filter_query = {"date": date_str}
+    existing = await db.daily_scores.find_one(filter_query)
     
-    import json
-    if ds:
-        if ds.frozen:
-            return ds.score
-        ds.score = score_val
-        ds.breakdown_json = json.dumps(breakdown)
+    if existing:
+        if existing.get("frozen"):
+            return existing["score"]
+        await db.daily_scores.update_one(
+            {"_id": existing["_id"]},
+            {"$set": {"score": score_val, "breakdown": breakdown}}
+        )
     else:
-        ds = DailyScore(date=date_str, score=score_val, breakdown_json=json.dumps(breakdown))
-        db.add(ds)
+        await db.daily_scores.insert_one({
+            "date": date_str,
+            "score": score_val,
+            "breakdown": breakdown,
+            "frozen": False
+        })
         
-    await db.commit()
-    
-    # Also recalculate personal bests and streaks here?
     return score_val

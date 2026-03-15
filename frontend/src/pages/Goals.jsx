@@ -1,68 +1,41 @@
 import { useState, useEffect } from 'react';
 import { Plus, Target, Trophy, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
-import axios from 'axios';
+import { useGoals } from '../hooks/useGoals';
 
-const CATEGORIES = ['Fitness', 'Health', 'Study', 'Lifestyle', 'Finance', 'General'];
-const CATEGORY_COLORS = { Fitness: '#0F6E56', Health: '#EF4444', Study: '#3B82F6', Lifestyle: '#D97706', Finance: '#8B5CF6', General: '#64748B' };
 
 export default function Goals() {
-  const [goals, setGoals] = useState([]);
+  const { goals, categories, loading, addGoal, deleteGoal, updateProgress, toggleMilestone, addMilestone } = useGoals();
   const [showAdd, setShowAdd] = useState(false);
   const [expandedGoal, setExpandedGoal] = useState(null);
   const [newGoal, setNewGoal] = useState({ title: '', description: '', category: 'General', target_value: '', unit: '', deadline: '' });
   const [newMilestone, setNewMilestone] = useState('');
   const [addingMileTo, setAddingMileTo] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get('/api/goals/');
-      if (res.data.success) setGoals(res.data.data);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  };
-
-  useEffect(() => { fetchData(); }, []);
+  const CATEGORY_COLORS = categories.reduce((acc, cat) => {
+    acc[cat.name] = cat.color;
+    return acc;
+  }, {});
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    await axios.post('/api/goals/', {
+    await addGoal({
       ...newGoal,
       target_value: newGoal.target_value ? parseFloat(newGoal.target_value) : null
     });
     setShowAdd(false);
     setNewGoal({ title: '', description: '', category: 'General', target_value: '', unit: '', deadline: '' });
-    fetchData();
   };
 
-  const updateProgress = async (goalId, newValue) => {
-    await axios.put(`/api/goals/${goalId}/progress`, { current_value: parseFloat(newValue) });
-    fetchData();
-  };
-
-  const toggleMilestone = async (msId) => {
-    await axios.put(`/api/goals/milestones/${msId}/toggle`);
-    fetchData();
-  };
-
-  const addMilestone = async (goalId) => {
+  const handleAddMilestone = async (goalId) => {
     if (!newMilestone.trim()) return;
-    await axios.post(`/api/goals/${goalId}/milestones`, { title: newMilestone });
+    await addMilestone(goalId, newMilestone);
     setNewMilestone('');
     setAddingMileTo(null);
-    fetchData();
   };
-
-  const deleteGoal = async (goalId) => {
-    await axios.delete(`/api/goals/${goalId}`);
-    fetchData();
-  };
-
-  if (loading) return <div className="p-4">Loading...</div>;
 
   const activeGoals = goals.filter(g => g.status === 'Active');
   const completedGoals = goals.filter(g => g.status === 'Completed');
+  if (loading) return <div className="p-4">Loading...</div>;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -78,7 +51,7 @@ export default function Goals() {
           <textarea rows={2} value={newGoal.description} onChange={e => setNewGoal({...newGoal, description: e.target.value})} placeholder="Description (optional)" className="w-full p-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700 outline-none text-sm resize-none" />
           <div className="grid grid-cols-2 gap-3">
             <select value={newGoal.category} onChange={e => setNewGoal({...newGoal, category: e.target.value})} className="p-2 border rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 outline-none">
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
             </select>
             <input type="date" value={newGoal.deadline} onChange={e => setNewGoal({...newGoal, deadline: e.target.value})} className="p-2 border rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 outline-none" />
           </div>
@@ -158,8 +131,8 @@ export default function Goals() {
                   ))}
                   {addingMileTo === g.id ? (
                     <div className="flex gap-2">
-                      <input autoFocus value={newMilestone} onChange={e => setNewMilestone(e.target.value)} placeholder="Milestone..." className="flex-1 p-1.5 border rounded text-sm dark:bg-slate-800 outline-none" onKeyDown={e => e.key === 'Enter' && addMilestone(g.id)} />
-                      <button onClick={() => addMilestone(g.id)} className="px-3 py-1 bg-primary-light text-white rounded text-xs">Add</button>
+                      <input autoFocus value={newMilestone} onChange={e => setNewMilestone(e.target.value)} placeholder="Milestone..." className="flex-1 p-1.5 border rounded text-sm dark:bg-slate-800 outline-none" onKeyDown={e => e.key === 'Enter' && handleAddMilestone(g.id)} />
+                      <button onClick={() => handleAddMilestone(g.id)} className="px-3 py-1 bg-primary-light text-white rounded text-xs">Add</button>
                     </div>
                   ) : (
                     <button onClick={() => setAddingMileTo(g.id)} className="text-xs text-primary-light font-medium">+ Add Milestone</button>

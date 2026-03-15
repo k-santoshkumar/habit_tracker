@@ -5,11 +5,9 @@ import { Plus } from 'lucide-react';
 
 export default function Tablets() {
   const [date] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const { tablets, logs, logTablet, addTablet, loading } = useTablets(date);
+  const { tablets, logs, timings, logTablet, addTablet, loading } = useTablets(date);
   const [showAdd, setShowAdd] = useState(false);
   const [newTab, setNewTab] = useState({ name: '', dose: '', frequency: 'Daily', timing: 'Morning', critical: false, reminder_time: '' });
-
-  const timings = ["Morning", "Afternoon", "Evening", "Night"];
 
   const handleAdd = async (e) => {
       e.preventDefault();

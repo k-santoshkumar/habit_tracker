@@ -10,6 +10,11 @@ def fix_id(obj):
         obj["id"] = str(obj["_id"])
     return obj
 
+@router.get("/suggestions")
+async def get_suggestions():
+    s_list = await db.activity_suggestions.find().to_list(length=100)
+    return {"success": True, "data": [s["name"] for s in s_list]}
+
 @router.get("/types")
 async def get_activity_types():
     types = await db.activity_types.find().to_list(length=100)

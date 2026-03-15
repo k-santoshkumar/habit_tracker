@@ -6,98 +6,93 @@ import sys
 MONGODB_URL = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
 DB_NAME = "health_tracker"
 
+# --- CATEGORIES & OPTIONS ---
+
 MEAL_CATEGORIES = ['Breakfast', 'Lunch', 'Dinner', 'Morning Snack', 'Afternoon Snack', 'Post-Workout']
+
+GOAL_CATEGORIES = [
+    {"name": 'Fitness', "color": '#0F6E56'},
+    {"name": 'Health', "color": '#EF4444'},
+    {"name": 'Study', "color": '#3B82F6'},
+    {"name": 'Lifestyle', "color": '#D97706'},
+    {"name": 'Finance', "color": '#8B5CF6'},
+    {"name": 'General', "color": '#64748B'}
+]
+
+TABLET_TIMINGS = ["Morning", "Afternoon", "Evening", "Night"]
+
+ACTIVITY_SUGGESTIONS = [
+    "Weightlifting", "Running", "Cycling", "Swimming", "Yoga", 
+    "Pilates", "HIIT", "Walking", "Hiking", "Rowing", "Stretching", 
+    "Meditation", "Jump Rope", "Basketball", "Tennis", "Football", 
+    "Dancing", "Martial Arts", "Climbing", "Boxing", "Gymnastics", 
+    "Elliptical", "Stair Stepper", "Zumba", "Aerobics"
+]
+
+MOOD_OPTIONS = {
+    "mood": ['', '😢', '😔', '😐', '😊', '🤩'],
+    "energy": ['', '🪫', '🔋', '⚡', '💪', '🚀'],
+    "stress": ['', '😌', '🙂', '😬', '😰', '🤯']
+}
+
+SLEEP_QUALITY_OPTIONS = [
+    {"label": 'Awful', "emoji": '😴', "color": '#EF4444', "value": 1},
+    {"label": 'Poor', "emoji": '😑', "color": '#F97316', "value": 2},
+    {"label": 'Fair', "emoji": '😐', "color": '#EAB308', "value": 3},
+    {"label": 'Good', "emoji": '😊', "color": '#22C55E', "value": 4},
+    {"label": 'Excellent', "emoji": '🌟', "color": '#0F6E56', "value": 5}
+]
+
+HABIT_SUGGESTIONS = [
+  'Read 30 minutes', 'Meditate', 'Journal', 'No Social Media', 'Cold Shower',
+  'Wake before 7am', 'Stretch', 'Take a Walk', 'Drink Green Tea', 'Practice Gratitude',
+  'No Junk Food', 'Learn Something New', 'Clean Desk', 'Call a Friend', 'Floss',
+  'Limit Screen Time', 'Cook at Home', 'Sleep before 11pm', 'Drink Water First Thing', 'Exercise'
+]
+
+# --- STARTER DATA ---
 
 FOOD_DATABASE = [
     {"category": "Breakfast", "name": "Oatmeal", "protein": 6},
     {"category": "Breakfast", "name": "Eggs & Toast", "protein": 18},
-    {"category": "Breakfast", "name": "Pancakes", "protein": 8},
-    {"category": "Breakfast", "name": "Greek Yogurt Bowl", "protein": 15},
-    {"category": "Breakfast", "name": "Avocado Toast", "protein": 7},
-    {"category": "Breakfast", "name": "Smoothie Bowl", "protein": 12},
-    {"category": "Breakfast", "name": "Cereal & Milk", "protein": 8},
-    {"category": "Breakfast", "name": "Fruit Bowl", "protein": 2},
-    {"category": "Breakfast", "name": "Peanut Butter Toast", "protein": 10},
-    {"category": "Breakfast", "name": "Idli Sambar", "protein": 6},
-    {"category": "Breakfast", "name": "Poha", "protein": 4},
-    {"category": "Breakfast", "name": "Paratha & Curd", "protein": 6},
-    {"category": "Breakfast", "name": "Upma", "protein": 5},
-    {"category": "Breakfast", "name": "Dosa & Chutney", "protein": 4},
-    
     {"category": "Lunch", "name": "Chicken Breast & Rice", "protein": 40},
-    {"category": "Lunch", "name": "Grilled Fish & Salad", "protein": 35},
-    {"category": "Lunch", "name": "Lentil Stew (Dal)", "protein": 18},
-    {"category": "Lunch", "name": "Paneer Curry & Roti", "protein": 22},
-    {"category": "Lunch", "name": "Turkey Sandwich", "protein": 28},
-    {"category": "Lunch", "name": "Veggie Wrap", "protein": 12},
-    {"category": "Lunch", "name": "Quinoa Bowl", "protein": 14},
-    {"category": "Lunch", "name": "Pasta Primavera", "protein": 15},
-    {"category": "Lunch", "name": "Burrito Bowl", "protein": 30},
-    {"category": "Lunch", "name": "Rajma Rice", "protein": 15},
-    {"category": "Lunch", "name": "Chole & Rice", "protein": 14},
-    {"category": "Lunch", "name": "Dal & Rice", "protein": 12},
-    {"category": "Lunch", "name": "Chicken Biryani", "protein": 20},
-    {"category": "Lunch", "name": "Tofu Stir-fry & Rice", "protein": 20},
-
     {"category": "Dinner", "name": "Grilled Salmon", "protein": 38},
-    {"category": "Dinner", "name": "Steak & Potatoes", "protein": 42},
-    {"category": "Dinner", "name": "Chicken Tikka", "protein": 35},
-    {"category": "Dinner", "name": "Fish & Veggies", "protein": 30},
-    {"category": "Dinner", "name": "Tofu Stir-fry", "protein": 20},
-    {"category": "Dinner", "name": "Pasta Bolognese", "protein": 15},
-    {"category": "Dinner", "name": "Soup & Bread", "protein": 10},
-    {"category": "Dinner", "name": "Palak Paneer & Naan", "protein": 18},
-    {"category": "Dinner", "name": "Egg Curry & Rice", "protein": 16},
-    {"category": "Dinner", "name": "Grilled Chicken Salad", "protein": 32},
-    {"category": "Dinner", "name": "Shrimp Stir-fry", "protein": 28},
-    {"category": "Dinner", "name": "Daal Makhani & Roti", "protein": 14},
-
-    {"category": "Morning Snack", "name": "Protein Bar", "protein": 20},
-    {"category": "Morning Snack", "name": "Almonds (30g)", "protein": 6},
-    {"category": "Morning Snack", "name": "Apple & Peanut Butter", "protein": 7},
-    {"category": "Morning Snack", "name": "Boiled Eggs (2)", "protein": 12},
-    {"category": "Morning Snack", "name": "Trail Mix", "protein": 8},
-    {"category": "Morning Snack", "name": "Banana", "protein": 1},
-    {"category": "Morning Snack", "name": "Cheese & Crackers", "protein": 10},
-
-    {"category": "Afternoon Snack", "name": "Greek Yogurt", "protein": 15},
-    {"category": "Afternoon Snack", "name": "Hummus & Veggies", "protein": 6},
-    {"category": "Afternoon Snack", "name": "Protein Shake", "protein": 25},
-    {"category": "Afternoon Snack", "name": "Mixed Nuts", "protein": 7},
-    {"category": "Afternoon Snack", "name": "Fruit Salad", "protein": 2},
-    {"category": "Afternoon Snack", "name": "Makhana (Fox Nuts)", "protein": 4},
-    {"category": "Afternoon Snack", "name": "Roasted Chana", "protein": 10},
-
     {"category": "Post-Workout", "name": "Whey Protein Shake", "protein": 30},
-    {"category": "Post-Workout", "name": "Chicken Wrap", "protein": 28},
-    {"category": "Post-Workout", "name": "Eggs & Bread", "protein": 18},
-    {"category": "Post-Workout", "name": "Banana & Whey Shake", "protein": 27},
-    {"category": "Post-Workout", "name": "BCAA Drink", "protein": 0},
-    {"category": "Post-Workout", "name": "Paneer Tikka", "protein": 22},
+]
+
+STARTER_TABLETS = [
+    {"name": "Multivitamin", "dose": "1 tab", "frequency": "Daily", "timing": "Morning", "critical": True},
+    {"name": "Omega 3", "dose": "1000mg", "frequency": "Daily", "timing": "Evening", "critical": False}
+]
+
+STARTER_ACTIVITY_TYPES = [
+    {"name": "Weightlifting", "icon": "Dumbbell", "color_tag": "teal", "schedule_days": "all"},
+    {"name": "Running", "icon": "HeartPulse", "color_tag": "blue", "schedule_days": "all"},
+    {"name": "Yoga", "icon": "Zap", "color_tag": "amber", "schedule_days": "all"}
+]
+
+STARTER_HABITS = [
+    {"name": "Read 10 pages", "icon": "Check", "color": "blue", "frequency": "daily"},
+    {"name": "Drink 2L water", "icon": "Check", "color": "teal", "frequency": "daily"},
+    {"name": "Meditate", "icon": "Check", "color": "amber", "frequency": "daily"}
 ]
 
 HEALTH_PRESETS = [
     {"name": "Weight", "unit": "kg", "min_range": 40.0, "max_range": 150.0},
     {"name": "Blood Pressure (Systolic)", "unit": "mmHg", "min_range": 90.0, "max_range": 140.0},
     {"name": "Blood Pressure (Diastolic)", "unit": "mmHg", "min_range": 60.0, "max_range": 90.0},
-    {"name": "Heart Rate (Resting)", "unit": "bpm", "min_range": 50.0, "max_range": 100.0},
-    {"name": "Blood Sugar (Fasting)", "unit": "mg/dL", "min_range": 70.0, "max_range": 110.0},
-    {"name": "Blood Sugar (Post-meal)", "unit": "mg/dL", "min_range": 70.0, "max_range": 180.0},
-    {"name": "HbA1c", "unit": "%", "min_range": 4.0, "max_range": 6.5},
-    {"name": "Cholesterol (Total)", "unit": "mg/dL", "min_range": 100.0, "max_range": 200.0},
-    {"name": "HDL Cholesterol", "unit": "mg/dL", "min_range": 40.0, "max_range": 80.0},
-    {"name": "LDL Cholesterol", "unit": "mg/dL", "min_range": 50.0, "max_range": 130.0},
-    {"name": "Triglycerides", "unit": "mg/dL", "min_range": 50.0, "max_range": 150.0},
-    {"name": "BMI", "unit": "kg/m2", "min_range": 18.5, "max_range": 25.0},
-    {"name": "Body Fat", "unit": "%", "min_range": 8.0, "max_range": 30.0},
-    {"name": "Waist Circumference", "unit": "cm", "min_range": 60.0, "max_range": 100.0},
-    {"name": "SpO2", "unit": "%", "min_range": 95.0, "max_range": 100.0},
-    {"name": "Temperature", "unit": "F", "min_range": 97.0, "max_range": 99.5},
-    {"name": "Creatinine", "unit": "mg/dL", "min_range": 0.6, "max_range": 1.2},
-    {"name": "Hemoglobin", "unit": "g/dL", "min_range": 12.0, "max_range": 17.0},
-    {"name": "Vitamin D", "unit": "ng/mL", "min_range": 30.0, "max_range": 80.0},
-    {"name": "TSH", "unit": "mIU/L", "min_range": 0.4, "max_range": 4.0},
+    {"name": "Heart Rate", "unit": "bpm", "min_range": 50.0, "max_range": 100.0}
 ]
+
+DEFAULT_PROFILE = {
+    "name": "User",
+    "dob": "1995-01-01",
+    "weight_kg": 70.0,
+    "height_cm": 175.0,
+    "start_date": "2024-01-01",
+    "protein_target_g": 100,
+    "water_target_ml": 2500
+}
 
 async def seed():
     import certifi
@@ -112,17 +107,49 @@ async def seed():
 
     db = client[DB_NAME]
     
-    print("Seeding meal categories...")
+    # 1. Seeding Categories & Options
+    print("Seeding options and categories...")
     await db.meal_categories.delete_many({})
     await db.meal_categories.insert_many([{"name": c} for c in MEAL_CATEGORIES])
     
-    print("Seeding food database...")
-    await db.food_items.delete_many({})
-    await db.food_items.insert_many(FOOD_DATABASE)
+    await db.goal_categories.delete_many({})
+    await db.goal_categories.insert_many(GOAL_CATEGORIES)
     
-    print("Seeding health presets...")
-    await db.health_presets.delete_many({})
-    await db.health_presets.insert_many(HEALTH_PRESETS)
+    await db.tablet_timings.delete_many({})
+    await db.tablet_timings.insert_many([{"name": t} for t in TABLET_TIMINGS])
+    
+    await db.activity_suggestions.delete_many({})
+    await db.activity_suggestions.insert_many([{"name": s} for s in ACTIVITY_SUGGESTIONS])
+
+    await db.mood_options.delete_many({})
+    await db.mood_options.insert_one(MOOD_OPTIONS)
+    
+    await db.sleep_quality_options.delete_many({})
+    await db.sleep_quality_options.insert_many(SLEEP_QUALITY_OPTIONS)
+    
+    await db.habit_suggestions.delete_many({})
+    await db.habit_suggestions.insert_many([{"name": s} for s in HABIT_SUGGESTIONS])
+
+    # 2. Seeding Starter Content (Only if empty to avoid duplicates on every run)
+    print("Seeding starter content...")
+    
+    if await db.food_items.count_documents({}) == 0:
+        await db.food_items.insert_many(FOOD_DATABASE)
+    
+    if await db.tablets.count_documents({}) == 0:
+        await db.tablets.insert_many(STARTER_TABLETS)
+        
+    if await db.activity_types.count_documents({}) == 0:
+        await db.activity_types.insert_many(STARTER_ACTIVITY_TYPES)
+        
+    if await db.habits.count_documents({}) == 0:
+        await db.habits.insert_many(STARTER_HABITS)
+        
+    if await db.health_presets.count_documents({}) == 0:
+        await db.health_presets.insert_many(HEALTH_PRESETS)
+        
+    if await db.profiles.count_documents({}) == 0:
+        await db.profiles.insert_one(DEFAULT_PROFILE)
     
     print("Seeding complete!")
     client.close()

@@ -10,6 +10,11 @@ def fix_id(obj):
         obj["id"] = str(obj["_id"])
     return obj
 
+@router.get("/timings")
+async def get_timings():
+    t_list = await db.tablet_timings.find().to_list(length=100)
+    return {"success": True, "data": [t["name"] for t in t_list]}
+
 @router.get("/")
 async def get_tablets():
     tablets = await db.tablets.find().to_list(length=100)

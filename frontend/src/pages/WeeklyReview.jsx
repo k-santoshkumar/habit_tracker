@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { format, subDays } from 'date-fns';
 import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Moon, Smile, Flame, Trophy } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import axios from 'axios';
+import * as api from '../api/weekly';
+
 
 export default function WeeklyReview() {
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -12,7 +13,7 @@ export default function WeeklyReview() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`/api/weekly/${endDate}`);
+      const res = await api.getWeeklyReview(endDate);
       if (res.data.success) setReview(res.data.data);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }

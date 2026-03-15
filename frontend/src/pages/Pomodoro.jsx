@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
 import { Play, Pause, RotateCcw, Coffee, Timer, Check } from 'lucide-react';
-import axios from 'axios';
+import * as api from '../api/pomodoro';
+
 
 const PRESETS = [
   { label: '25/5', work: 25, break: 5 },
@@ -24,8 +25,8 @@ export default function Pomodoro() {
   const fetchData = async () => {
     try {
       const [sessRes, statsRes] = await Promise.all([
-        axios.get(`/api/pomodoro/sessions/${date}`),
-        axios.get('/api/pomodoro/stats')
+        api.getPomodoroSessions(date),
+        api.getPomodoroStats()
       ]);
       if (sessRes.data.success) setSessions(sessRes.data.data);
       if (statsRes.data.success) setStats(statsRes.data.data);
@@ -37,7 +38,7 @@ export default function Pomodoro() {
   const completeSession = useCallback(async () => {
     if (!isBreak) {
       // Log completed work session
-      await axios.post('/api/pomodoro/sessions', {
+      await api.createPomodoroSession({
         date, duration_min: workMin, break_min: breakMin, label: label || 'Focus Session', completed: true
       });
       fetchData();

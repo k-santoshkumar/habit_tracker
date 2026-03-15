@@ -291,3 +291,22 @@ class Habit(HabitBase):
     id: Optional[str] = None
     class Config:
         from_attributes = True
+
+class UserBase(BaseModel):
+    email: str
+    full_name: Optional[str] = None
+
+class UserCreate(UserBase):
+    password: str
+
+class UserInDB(UserBase):
+    id: Optional[str] = None
+    hashed_password: str
+    created_at: datetime = datetime.now()
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None

@@ -21,7 +21,8 @@ async def health_check():
 
 # Routers
 from backend.routers import profile, tablets, diet, study, activity, health, dashboard, insights, reflections, settings
-from backend.routers import sleep, mood, habits, goals, pomodoro, weekly, photos
+from backend.routers import sleep, mood, habits, goals, pomodoro, weekly, photos, auth
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(dashboard.router, prefix="/api")
 app.include_router(profile.router, prefix="/api")
 app.include_router(tablets.router, prefix="/api/tablets")

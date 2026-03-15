@@ -5,7 +5,7 @@ import { Plus, Check, PlayCircle, HeartPulse, Dumbbell, Zap } from 'lucide-react
 
 export default function Activity() {
   const [date] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const { types, logs, loading, addType, toggleActivity } = useActivity(date);
+  const { types, logs, suggestions, loading, addType, toggleActivity } = useActivity(date);
   const [showAdd, setShowAdd] = useState(false);
   const [newType, setNewType] = useState({ name: '', icon: 'Dumbbell', color_tag: 'teal', schedule_days: 'all' });
 
@@ -41,31 +41,7 @@ export default function Activity() {
               <h3 className="font-medium">New Activity Type</h3>
               
               <datalist id="activity-suggestions">
-                <option value="Weightlifting" />
-                <option value="Running" />
-                <option value="Cycling" />
-                <option value="Swimming" />
-                <option value="Yoga" />
-                <option value="Pilates" />
-                <option value="HIIT" />
-                <option value="Walking" />
-                <option value="Hiking" />
-                <option value="Rowing" />
-                <option value="Stretching" />
-                <option value="Meditation" />
-                <option value="Jump Rope" />
-                <option value="Basketball" />
-                <option value="Tennis" />
-                <option value="Football" />
-                <option value="Dancing" />
-                <option value="Martial Arts" />
-                <option value="Climbing" />
-                <option value="Boxing" />
-                <option value="Gymnastics" />
-                <option value="Elliptical" />
-                <option value="Stair Stepper" />
-                <option value="Zumba" />
-                <option value="Aerobics" />
+                  {suggestions.map(s => <option key={s} value={s} />)}
               </datalist>
 
               <div>

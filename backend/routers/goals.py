@@ -10,6 +10,11 @@ def fix_id(obj):
         obj["id"] = str(obj["_id"])
     return obj
 
+@router.get("/categories")
+async def get_categories():
+    cats = await db.goal_categories.find().to_list(length=100)
+    return {"success": True, "data": [fix_id(c) for c in cats]}
+
 @router.get("/")
 async def get_goals():
     goals = await db.goals.find().sort("created_at", -1).to_list(length=100)

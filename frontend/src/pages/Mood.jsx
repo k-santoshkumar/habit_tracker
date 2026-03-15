@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import axios from 'axios';
+import * as api from '../api/mood';
 
-const MOOD_EMOJIS = ['', '😢', '😔', '😐', '😊', '🤩'];
-const ENERGY_EMOJIS = ['', '🪫', '🔋', '⚡', '💪', '🚀'];
-const STRESS_EMOJIS = ['', '😌', '🙂', '😬', '😰', '🤯'];
+
+
+
 
 export default function Mood() {
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -15,14 +15,18 @@ export default function Mood() {
   const [form, setForm] = useState({ mood: 3, energy: 3, stress: 3, notes: '' });
   const [editing, setEditing] = useState(false);
 
+  const [options, setOptions] = useState({ mood: [], energy: [], stress: [] });
+
   const fetchData = async () => {
     try {
-      const [entryRes, histRes] = await Promise.all([
-        axios.get(`/api/mood/entries/${date}`),
-        axios.get('/api/mood/entries')
+      const [entryRes, histRes, optsRes] = await Promise.all([
+        api.getMoodEntry(date),
+        api.getMoodEntries(),
+        api.getMoodOptions()
       ]);
       if (entryRes.data.success) setEntry(entryRes.data.data);
       if (histRes.data.success) setHistory(histRes.data.data);
+      if (optsRes.data.success) setOptions(optsRes.data.data);
     } catch (e) { console.error(e); }
   };
 
@@ -30,7 +34,7 @@ export default function Mood() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    await axios.post('/api/mood/entries', { ...form, date });
+    await api.logMood({ ...form, date });
     setEditing(false);
     fetchData();
   };
@@ -77,10 +81,10 @@ export default function Mood() {
 
       {entry && !editing ? (
         <div className="card p-6 text-center space-y-4 cursor-pointer" onClick={() => { setForm({ mood: entry.mood, energy: entry.energy, stress: entry.stress, notes: entry.notes || '' }); setEditing(true); }}>
-          <div className="text-6xl">{MOOD_EMOJIS[entry.mood]}</div>
+          <div className="text-6xl">{options.mood[entry.mood]}</div>
           <div className="flex justify-center gap-8 text-sm">
-            <div><span className="text-slate-500">Energy</span> <span className="text-lg">{ENERGY_EMOJIS[entry.energy]}</span></div>
-            <div><span className="text-slate-500">Stress</span> <span className="text-lg">{STRESS_EMOJIS[entry.stress]}</span></div>
+            <div><span className="text-slate-500">Energy</span> <span className="text-lg">{options.energy[entry.energy]}</span></div>
+            <div><span className="text-slate-500">Stress</span> <span className="text-lg">{options.stress[entry.stress]}</span></div>
           </div>
           {entry.notes && <div className="text-sm text-slate-400 italic mt-2">"{entry.notes}"</div>}
           <div className="text-xs text-slate-400">Tap to edit</div>
@@ -89,9 +93,9 @@ export default function Mood() {
         <form className="card p-5 space-y-6" onSubmit={handleSave}>
           <h3 className="font-medium">{entry ? 'Edit Check-in' : 'How are you feeling?'}</h3>
           
-          <ScaleSelector label="Mood" emojis={MOOD_EMOJIS} value={form.mood} onChange={v => setForm({...form, mood: v})} />
-          <ScaleSelector label="Energy" emojis={ENERGY_EMOJIS} value={form.energy} onChange={v => setForm({...form, energy: v})} />
-          <ScaleSelector label="Stress" emojis={STRESS_EMOJIS} value={form.stress} onChange={v => setForm({...form, stress: v})} />
+          <ScaleSelector label="Mood" emojis={options.mood} value={form.mood} onChange={v => setForm({...form, mood: v})} />
+          <ScaleSelector label="Energy" emojis={options.energy} value={form.energy} onChange={v => setForm({...form, energy: v})} />
+          <ScaleSelector label="Stress" emojis={options.stress} value={form.stress} onChange={v => setForm({...form, stress: v})} />
 
           <div>
             <label className="text-xs text-slate-500 mb-1 block">Notes (optional)</label>

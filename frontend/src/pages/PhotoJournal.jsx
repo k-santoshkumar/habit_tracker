@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { Camera, Image as ImageIcon, Plus, Trash2, X } from 'lucide-react';
-import axios from 'axios';
+import * as api from '../api/photos';
+
 
 export default function PhotoJournal() {
   const [photos, setPhotos] = useState([]);
@@ -17,7 +18,7 @@ export default function PhotoJournal() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('/api/photos/');
+      const res = await api.getPhotos();
       if (res.data.success) {
         setPhotos(res.data.data);
       }
@@ -45,7 +46,7 @@ export default function PhotoJournal() {
     e.preventDefault();
     if (!newPhoto) return;
     
-    await axios.post('/api/photos/', {
+    await api.createPhoto({
       date,
       image_data: newPhoto,
       caption
@@ -59,7 +60,7 @@ export default function PhotoJournal() {
   };
 
   const deletePhoto = async (id) => {
-    await axios.delete(`/api/photos/${id}`);
+    await api.deletePhoto(id);
     setViewedPhoto(null);
     fetchData();
   };

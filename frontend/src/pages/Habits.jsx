@@ -1,19 +1,17 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Plus, Check, Trash2, Flame, Search } from 'lucide-react';
-import axios from 'axios';
+import * as api from '../api/habits';
 
-const HABIT_SUGGESTIONS = [
-  'Read 30 minutes', 'Meditate', 'Journal', 'No Social Media', 'Cold Shower',
-  'Wake before 7am', 'Stretch', 'Take a Walk', 'Drink Green Tea', 'Practice Gratitude',
-  'No Junk Food', 'Learn Something New', 'Clean Desk', 'Call a Friend', 'Floss',
-  'Limit Screen Time', 'Cook at Home', 'Sleep before 11pm', 'Drink Water First Thing', 'Exercise'
-];
+
+
+
 
 export default function Habits() {
   const [date] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [habits, setHabits] = useState([]);
   const [logs, setLogs] = useState({});
+  const [suggestions, setSuggestions] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const [newHabit, setNewHabit] = useState('');
   const [loading, setLoading] = useState(true);
@@ -21,9 +19,10 @@ export default function Habits() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [habitsRes, logsRes] = await Promise.all([
-        axios.get('/api/habits/'),
-        axios.get(`/api/habits/logs/${date}`)
+      const [habitsRes, logsRes, suggRes] = await Promise.all([
+        api.getHabits(),
+        api.getHabitLogs(date),
+        api.getHabitSuggestions()
       ]);
       if (habitsRes.data.success) setHabits(habitsRes.data.data);
       if (logsRes.data.success) {
@@ -31,6 +30,7 @@ export default function Habits() {
         logsRes.data.data.forEach(l => { logMap[l.habit_id] = l.completed; });
         setLogs(logMap);
       }
+      if (suggRes.data.success) setSuggestions(suggRes.data.data);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -39,26 +39,26 @@ export default function Habits() {
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    await axios.post('/api/habits/', { name: newHabit });
+    await api.createHabit({ name: newHabit });
     setNewHabit('');
     setShowAdd(false);
     fetchData();
   };
 
   const toggleHabit = async (habitId) => {
-    await axios.post('/api/habits/logs', { date, habit_id: habitId, completed: !logs[habitId] });
+    await api.logHabit({ date, habit_id: habitId, completed: !logs[habitId] });
     setLogs({ ...logs, [habitId]: !logs[habitId] });
   };
 
   const deleteHabit = async (habitId) => {
-    await axios.delete(`/api/habits/${habitId}`);
+    await api.deleteHabit(habitId);
     fetchData();
   };
 
   const completedCount = habits.filter(h => logs[h.id]).length;
   const completionRate = habits.length > 0 ? Math.round((completedCount / habits.length) * 100) : 0;
 
-  const filtered = newHabit ? HABIT_SUGGESTIONS.filter(s => s.toLowerCase().includes(newHabit.toLowerCase())) : HABIT_SUGGESTIONS;
+  const filtered = newHabit ? suggestions.filter(s => s.toLowerCase().includes(newHabit.toLowerCase())) : suggestions;
 
   if (loading) return <div className="p-4">Loading...</div>;
 

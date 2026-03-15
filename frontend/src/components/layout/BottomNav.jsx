@@ -1,10 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Smile, CheckSquare, Timer, MoreHorizontal, Camera } from 'lucide-react';
+import { Home, Smile, CheckSquare, Timer, MoreHorizontal, Camera, LogOut } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { useState } from 'react';
 import { Moon, Pill, Coffee, BookOpen, Activity, Heart, Target, CalendarCheck, Lightbulb, Settings as SettingsIcon } from 'lucide-react';
 
 export default function BottomNav() {
   const [showMore, setShowMore] = useState(false);
+  const { logout } = useAuth();
 
   const primaryLinks = [
     { to: '/', icon: <Home size={20} />, label: 'Home' },
@@ -42,6 +44,13 @@ export default function BottomNav() {
                   <span className="text-[9px]">{link.label}</span>
                 </NavLink>
               ))}
+              <button 
+                onClick={() => { setShowMore(false); logout(); }}
+                className="flex flex-col items-center gap-1 p-2 rounded-xl text-red-500"
+              >
+                <LogOut size={18} />
+                <span className="text-[9px]">Logout</span>
+              </button>
             </div>
           </div>
         </div>

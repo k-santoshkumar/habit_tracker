@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { format } from 'date-fns'
 import * as dsApi from '../api/dashboard';
+import * as reflApi from '../api/reflections';
 
 export default function Dashboard() {
   const [score, setScore] = useState(0)
@@ -64,7 +65,10 @@ export default function Dashboard() {
 
       {/* Reflection Prompt */}
       {showReflection && (
-          <ReflectionPrompt onSubmit={(data) => console.log('Saved reflection:', data)} />
+          <ReflectionPrompt onSubmit={async (data) => {
+              const today = format(new Date(), 'yyyy-MM-dd');
+              await reflApi.saveReflection({ ...data, date: today });
+          }} />
       )}
 
     </div>

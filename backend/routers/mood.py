@@ -10,12 +10,24 @@ def fix_id(obj):
         obj["id"] = str(obj["_id"])
     return obj
 
-@router.get("/")
+@router.get("/options")
+async def get_mood_options():
+    opts = await db.mood_options.find_one()
+    if opts:
+        opts.pop("_id", None)
+    return {"success": True, "data": opts}
+
+@router.get("/entries")
 async def get_moods():
     moods = await db.mood_entries.find().sort("date", -1).to_list(length=100)
     return {"success": True, "data": [MoodEntrySchema(**fix_id(m)) for m in moods]}
 
-@router.post("/")
+@router.get("/entries/{date_str}")
+async def get_mood_entry(date_str: str):
+    mood = await db.mood_entries.find_one({"date": date_str})
+    return {"success": True, "data": MoodEntrySchema(**fix_id(mood)) if mood else None}
+
+@router.post("/entries")
 async def log_mood(mood: MoodEntryCreate):
     filter_query = {"date": mood.date}
     data = mood.model_dump()

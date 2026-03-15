@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { format, subDays } from 'date-fns';
 import { Moon, Sun, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import axios from 'axios';
+import * as api from '../api/sleep';
 
-const QUALITY_LABELS = ['', '😴 Awful', '😑 Poor', '😐 Fair', '😊 Good', '🌟 Excellent'];
-const QUALITY_COLORS = ['', '#EF4444', '#F97316', '#EAB308', '#22C55E', '#0F6E56'];
+
+
+
 
 export default function Sleep() {
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -14,14 +15,18 @@ export default function Sleep() {
   const [form, setForm] = useState({ sleep_time: '23:00', wake_time: '07:00', quality: 3, notes: '' });
   const [editing, setEditing] = useState(false);
 
+  const [options, setOptions] = useState([]);
+
   const fetchData = async () => {
     try {
-      const [logRes, histRes] = await Promise.all([
-        axios.get(`/api/sleep/logs/${date}`),
-        axios.get('/api/sleep/logs')
+      const [logRes, histRes, optsRes] = await Promise.all([
+        api.getSleepEntry(date),
+        api.getSleepHistory(),
+        api.getSleepOptions()
       ]);
       if (logRes.data.success) setLog(logRes.data.data);
       if (histRes.data.success) setHistory(histRes.data.data);
+      if (optsRes.data.success) setOptions(optsRes.data.data);
     } catch (e) { console.error(e); }
   };
 
@@ -29,7 +34,7 @@ export default function Sleep() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    await axios.post('/api/sleep/logs', { ...form, date });
+    await api.logSleep({ ...form, date });
     setEditing(false);
     fetchData();
   };
@@ -77,8 +82,9 @@ export default function Sleep() {
               <Star key={s} size={20} className={s <= log.quality ? 'text-accent-light fill-accent-light' : 'text-slate-300'} />
             ))}
           </div>
-          <div className="text-sm" style={{color: QUALITY_COLORS[log.quality]}}>{QUALITY_LABELS[log.quality]}</div>
-          {log.notes && <div className="text-xs text-slate-400 italic">"{log.notes}"</div>}
+          <div className="text-sm" style={{color: options.find(o => o.value === log.quality)?.color}}>
+            {options.find(o => o.value === log.quality)?.emoji} {options.find(o => o.value === log.quality)?.label}
+          </div>          {log.notes && <div className="text-xs text-slate-400 italic">"{log.notes}"</div>}
           <div className="text-xs text-slate-400">Tap to edit</div>
         </div>
       ) : (
@@ -98,15 +104,16 @@ export default function Sleep() {
           <div>
             <label className="text-xs text-slate-500 mb-2 block">Sleep Quality</label>
             <div className="flex justify-between gap-2">
-              {[1,2,3,4,5].map(q => (
-                <button key={q} type="button" onClick={() => setForm({...form, quality: q})}
+              {options.map(opt => (
+                <button key={opt.value} type="button" onClick={() => setForm({...form, quality: opt.value})}
+                  title={opt.label}
                   className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all border ${
-                    form.quality === q
+                    form.quality === opt.value
                       ? 'border-primary-light bg-primary-light/10 text-primary-light'
                       : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
                   }`}
                 >
-                  {QUALITY_LABELS[q].split(' ')[0]}
+                  {opt.emoji}
                 </button>
               ))}
             </div>

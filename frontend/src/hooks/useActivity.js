@@ -4,15 +4,18 @@ import * as api from '../api/activity';
 export function useActivity(date) {
     const [types, setTypes] = useState([]);
     const [logs, setLogs] = useState({});
+    const [suggestions, setSuggestions] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [typesRes, logsRes] = await Promise.all([
+            const [typesRes, logsRes, suggRes] = await Promise.all([
                 api.getActivityTypes(),
-                api.getActivityLogs(date)
+                api.getActivityLogs(date),
+                api.getActivitySuggestions()
             ]);
+            
             if (typesRes.data.success) {
                 setTypes(typesRes.data.data);
             }
@@ -22,6 +25,9 @@ export function useActivity(date) {
                     logData[l.activity_type_id] = l;
                 });
                 setLogs(logData);
+            }
+            if (suggRes.data.success) {
+                setSuggestions(suggRes.data.data);
             }
         } catch (e) {
             console.error(e);
@@ -53,5 +59,5 @@ export function useActivity(date) {
         }
     };
 
-    return { types, logs, loading, addType, toggleActivity, refetch: fetchData };
+    return { types, logs, suggestions, loading, addType, toggleActivity, refetch: fetchData };
 }

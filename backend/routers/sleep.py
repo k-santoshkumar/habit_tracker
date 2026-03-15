@@ -10,6 +10,16 @@ def fix_id(obj):
         obj["id"] = str(obj["_id"])
     return obj
 
+@router.get("/options")
+async def get_sleep_options():
+    opts = await db.sleep_quality_options.find().to_list(length=10)
+    return {"success": True, "data": [fix_id(o) for o in opts]}
+
+@router.get("/history")
+async def get_sleep_history():
+    logs = await db.sleep_logs.find().sort("date", -1).to_list(length=100)
+    return {"success": True, "data": [SleepLogSchema(**fix_id(l)) for l in logs]}
+
 @router.get("/{date_str}")
 async def get_sleep(date_str: str):
     log = await db.sleep_logs.find_one({"date": date_str})

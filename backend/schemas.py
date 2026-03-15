@@ -296,11 +296,14 @@ class UserBase(BaseModel):
     email: str
     full_name: Optional[str] = None
 
+class UserPublic(UserBase):
+    id: Optional[str] = None
+    created_at: Optional[datetime] = None
+
 class UserCreate(UserBase):
     password: str
 
-class UserInDB(UserBase):
-    id: Optional[str] = None
+class UserInDB(UserPublic):
     hashed_password: str
     created_at: datetime = datetime.now()
 

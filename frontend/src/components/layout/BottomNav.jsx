@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { Home, LayoutGrid, Plus, Settings, MoreHorizontal, LogOut, X } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { useState } from 'react';
 import { Moon, Pill, Coffee, BookOpen, Activity, Heart, Target, CalendarCheck, Lightbulb, Camera, Smile, Timer, CheckSquare } from 'lucide-react';
 

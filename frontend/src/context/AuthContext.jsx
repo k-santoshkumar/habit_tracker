@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect } from 'react';
 import * as authApi from '../api/auth';
 
 const AuthContext = createContext(null);
@@ -10,6 +10,7 @@ export function AuthProvider({ children }) {
     const checkAuth = async () => {
         const token = localStorage.getItem('token');
         if (!token) {
+            setUser(null);
             setLoading(false);
             return;
         }
@@ -20,9 +21,11 @@ export function AuthProvider({ children }) {
                 setUser(res.data.data);
             } else {
                 localStorage.removeItem('token');
+                setUser(null);
             }
-        } catch (e) {
+        } catch {
             localStorage.removeItem('token');
+            setUser(null);
         } finally {
             setLoading(false);
         }
@@ -58,10 +61,10 @@ export function AuthProvider({ children }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, register, logout, refetch: checkAuth }}>
+        <AuthContext.Provider value={{ user, loading, login, register, logout, refetch: checkAuth, setUser }}>
             {children}
         </AuthContext.Provider>
     );
 }
 
-export const useAuth = () => useContext(AuthContext);
+export { AuthContext };

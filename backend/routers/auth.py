@@ -9,10 +9,20 @@ from backend.auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
 from backend.database import db
-from backend.schemas import UserCreate, Token, UserInDB
+from backend.schemas import UserCreate, UserInDB, UserPublic, UpdateUser
 from datetime import timedelta, datetime
 
 router = APIRouter()
+
+def serialize_user(user: UserInDB | dict) -> UserPublic:
+    if isinstance(user, UserInDB):
+        return UserPublic.model_validate(user.model_dump())
+
+    normalized_user = dict(user)
+    if "_id" in normalized_user:
+        normalized_user["id"] = str(normalized_user["_id"])
+        normalized_user.pop("_id", None)
+    return UserPublic.model_validate(normalized_user)
 
 @router.post("/register", response_model=dict)
 async def register(user: UserCreate):
@@ -50,7 +60,10 @@ async def register(user: UserCreate):
         "success": True, 
         "access_token": access_token, 
         "token_type": "bearer",
-        "user": {"email": user.email, "full_name": user.full_name}
+        "user": serialize_user({
+            "email": user.email.lower(),
+            "full_name": user.full_name
+        })
     }
 
 @router.post("/login")
@@ -71,12 +84,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         "success": True,
         "access_token": access_token, 
         "token_type": "bearer",
-        "user": {"email": user["email"], "full_name": user.get("full_name")}
+        "user": serialize_user(user)
     }
-
-from backend.schemas import UserCreate, Token, UserInDB, UpdateUser
-
-# ... (rest of imports)
 
 @router.put("/me")
 async def update_me(user_update: UpdateUser, current_user: UserInDB = Depends(get_current_user)):
@@ -87,27 +96,38 @@ async def update_me(user_update: UpdateUser, current_user: UserInDB = Depends(ge
         if not is_valid_email(user_update.email):
             raise HTTPException(status_code=400, detail="Invalid email")
         # Check if new email is taken
-        if user_update.email.lower() != current_user["email"]:
+        new_email = user_update.email.lower()
+        if new_email != current_user.email:
             existing = await db.users.find_one({"email": user_update.email.lower()})
             if existing:
                 raise HTTPException(status_code=400, detail="Email already taken")
-            update_data["email"] = user_update.email.lower()
+            update_data["email"] = new_email
     
-    if user_update.password is not None:
+    if user_update.password:
         update_data["hashed_password"] = get_password_hash(user_update.password)
     
     if not update_data:
-        return {"success": True, "message": "No changes made", "data": current_user}
+        public_user = serialize_user(current_user)
+        return {"success": True, "message": "No changes made", "data": public_user, "user": public_user}
         
-    await db.users.update_one({"email": current_user["email"]}, {"$set": update_data})
-    updated_user = await db.users.find_one({"email": update_data.get("email", current_user["email"])})
+    await db.users.update_one({"email": current_user.email}, {"$set": update_data})
+    updated_user = await db.users.find_one({"email": update_data.get("email", current_user.email)})
+    public_user = serialize_user(updated_user)
+
+    access_token = create_access_token(
+        data={"sub": public_user.email},
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
     
-    # If email changed, we might need a new token, but for now just return success
-    return {"success": True, "message": "Profile updated", "data": {
-        "email": updated_user["email"],
-        "full_name": updated_user.get("full_name")
-    }}
+    return {
+        "success": True,
+        "message": "Profile updated",
+        "data": public_user,
+        "user": public_user,
+        "access_token": access_token,
+        "token_type": "bearer"
+    }
 
 @router.get("/me")
 async def get_me(current_user: UserInDB = Depends(get_current_user)):
-    return {"success": True, "data": current_user}
+    return {"success": True, "data": serialize_user(current_user)}

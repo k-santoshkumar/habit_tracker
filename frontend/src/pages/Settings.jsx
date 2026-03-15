@@ -1,8 +1,8 @@
 import { useTheme } from '../context/ThemeContext';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { useNotifications } from '../context/NotificationContext';
 import { useState } from 'react';
-import axios from 'axios';
+import { updateMe } from '../api/auth';
 import { Moon, Sun, Download, Trash2, User, Mail, Lock, Bell, BellOff, CheckCircle2, ChevronRight, Loader2 } from 'lucide-react';
 
 export default function Settings() {
@@ -21,14 +21,28 @@ export default function Settings() {
   const handleUpdate = async (e) => {
       e.preventDefault();
       setLoading(true);
+      const payload = {
+          full_name: profile.full_name,
+          email: profile.email
+      };
+      if (profile.password.trim()) {
+          payload.password = profile.password;
+      }
       try {
-          const res = await axios.put('/api/auth/me', profile, {
-              headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-          });
+          const res = await updateMe(payload);
           if (res.data.success) {
+              if (res.data.access_token) {
+                  localStorage.setItem('token', res.data.access_token);
+              }
               setSuccess(true);
-              setUser({ ...user, ...res.data.data });
+              const updatedUser = res.data.user ?? res.data.data;
+              setUser(updatedUser);
               addNotification("Profile Updated", "Your account details have been successfully saved.");
+              setProfile({
+                  full_name: updatedUser.full_name ?? '',
+                  email: updatedUser.email ?? '',
+                  password: ''
+              });
               setTimeout(() => setSuccess(false), 3000);
           }
       } catch (err) {

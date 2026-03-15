@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { Home, Pill, Coffee, BookOpen, Activity, Heart, Lightbulb, Settings as SettingsIcon, Moon, Smile, CheckSquare, Target, Timer, CalendarCheck, Camera, LogOut, Layout } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 
 export default function Sidebar() {
   const links = [

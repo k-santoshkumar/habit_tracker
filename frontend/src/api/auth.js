@@ -14,3 +14,4 @@ export const login = async (email, password) => {
 
 export const register = (data) => api.post('/auth/register', data);
 export const getMe = () => api.get('/auth/me');
+export const updateMe = (data) => api.put('/auth/me', data);

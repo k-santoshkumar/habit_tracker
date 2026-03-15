@@ -71,4 +71,5 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise credentials_exception
         
     user["id"] = str(user["_id"])
+    user.pop("_id", None)
     return UserInDB(**user)

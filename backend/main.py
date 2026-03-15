@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.database import engine, Base
 import uvicorn
+import os
 
 from contextlib import asynccontextmanager
 
@@ -45,4 +46,7 @@ app.include_router(weekly.router, prefix="/api/weekly")
 app.include_router(photos.router, prefix="/api/photos")
 
 if __name__ == "__main__":
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.environ.get("PORT", 8000))
+    # reload=True is for local development, Render needs reload=False or it may cause issues
+    is_dev = os.environ.get("RENDER") is None
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=is_dev)

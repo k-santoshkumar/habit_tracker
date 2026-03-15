@@ -1,6 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from backend.database import db
-from backend.schemas import Profile as ProfileSchema, ProfileCreate
+from backend.schemas import Profile as ProfileSchema, ProfileCreate, UserInDB
+from backend.auth import get_current_user
 from bson import ObjectId
 
 router = APIRouter()
@@ -8,23 +9,27 @@ router = APIRouter()
 def fix_id(obj):
     if obj and "_id" in obj:
         obj["id"] = str(obj["_id"])
+        del obj["_id"]
     return obj
 
 @router.get("/")
-async def get_profile():
-    profile = await db.profiles.find_one()
+async def get_profile(current_user: UserInDB = Depends(get_current_user)):
+    profile = await db.profiles.find_one({"user_email": current_user.email})
     if not profile:
         return {"success": True, "data": None}
     return {"success": True, "data": ProfileSchema(**fix_id(profile))}
 
 @router.post("/")
-async def update_profile(profile: ProfileCreate):
+async def update_profile(profile: ProfileCreate, current_user: UserInDB = Depends(get_current_user)):
     data = profile.model_dump()
-    existing = await db.profiles.find_one()
-    if existing:
-        await db.profiles.update_one({"_id": existing["_id"]}, {"$set": data})
-        data["id"] = str(existing["_id"])
-    else:
-        result = await db.profiles.insert_one(data)
-        data["id"] = str(result.inserted_id)
-    return {"success": True, "data": ProfileSchema(**data)}
+    data["user_email"] = current_user.email
+    
+    await db.profiles.update_one(
+        {"user_email": current_user.email},
+        {"$set": data},
+        upsert=True
+    )
+    
+    # Fetch again to get the ID if needed by the frontend, although schemas might differ
+    updated_profile = await db.profiles.find_one({"user_email": current_user.email})
+    return {"success": True, "data": ProfileSchema(**fix_id(updated_profile))}

@@ -13,11 +13,12 @@ The necessary dependencies are included and scaffolded. If you are starting fres
 2. `cd frontend && npm install`
 
 ## Running the App
-Run the following script from the root directory to start both the frontend and backend servers simultaneously:
+Run the following scripts from the root directory:
 
-```bash
-./start.sh
-```
+1. **Backend**: `chmod +x backend.sh && ./backend.sh`
+2. **Frontend**: `cd frontend && npm run dev`
+
+Alternatively, run as a module: `python -m backend.main`
 
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:8000`

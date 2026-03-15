@@ -2,7 +2,7 @@
 set -e
 
 echo "Starting Health Tracker Backend..."
-python backend/main.py &
+python -m backend.main &
 BACKEND_PID=$!
 echo "Backend: http://localhost:8000"
 

@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, startTransition } from 'react';
 import { format } from 'date-fns';
 import { Play, Pause, RotateCcw, Coffee, Timer, Check } from 'lucide-react';
 import * as api from '../api/pomodoro';
+import { schedulePomodoroNotification, cancelPomodoroNotification } from '../lib/notifications';
 
 
 const PRESETS = [
@@ -22,18 +23,34 @@ export default function Pomodoro() {
   const [stats, setStats] = useState({ total_sessions: 0, total_minutes: 0, today_sessions: 0 });
   const intervalRef = useRef(null);
 
-  const fetchData = async () => {
+  const schedulePhaseNotification = useCallback((durationSeconds, breakMode = isBreak) => {
+    const endsAt = new Date(Date.now() + (durationSeconds * 1000));
+    const title = breakMode ? 'Break complete' : 'Focus session complete';
+    const body = breakMode
+      ? 'Your break is over. Time to get back to work.'
+      : `${label || 'Your focus session'} has finished.`;
+
+    schedulePomodoroNotification({ title, body, endsAt }).catch((error) => {
+      console.error('Failed to schedule pomodoro notification', error);
+    });
+  }, [isBreak, label]);
+
+  const fetchData = useCallback(async () => {
     try {
       const [sessRes, statsRes] = await Promise.all([
         api.getPomodoroSessions(date),
         api.getPomodoroStats()
       ]);
-      if (sessRes.data.success) setSessions(sessRes.data.data);
-      if (statsRes.data.success) setStats(statsRes.data.data);
+      startTransition(() => {
+        if (sessRes.data.success) setSessions(sessRes.data.data);
+        if (statsRes.data.success) setStats(statsRes.data.data);
+      });
     } catch (e) { console.error(e); }
-  };
+  }, [date]);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    void fetchData();
+  }, [fetchData]);
 
   const completeSession = useCallback(async () => {
     if (!isBreak) {
@@ -45,13 +62,17 @@ export default function Pomodoro() {
       // Start break
       setIsBreak(true);
       setSecondsLeft(breakMin * 60);
+      schedulePhaseNotification(breakMin * 60, true);
     } else {
       // Break done, reset
       setIsBreak(false);
       setSecondsLeft(workMin * 60);
       setIsRunning(false);
+      cancelPomodoroNotification().catch((error) => {
+        console.error('Failed to cancel pomodoro notification', error);
+      });
     }
-  }, [isBreak, workMin, breakMin, label, date]);
+  }, [isBreak, workMin, breakMin, label, date, fetchData, schedulePhaseNotification]);
 
   useEffect(() => {
     if (isRunning) {
@@ -60,8 +81,12 @@ export default function Pomodoro() {
           if (prev <= 1) {
             clearInterval(intervalRef.current);
             // Play a notification sound
-            try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbsGczIVOj3OsGfTIjOY+91OkFeTQrR4i0yeBIaC03SIMAAAA=').play(); } catch(e) {}
-            completeSession();
+            try {
+              new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbsGczIVOj3OsGfTIjOY+91OkFeTQrR4i0yeBIaC03SIMAAAA=').play();
+            } catch {
+              // Ignore audio playback failures; the scheduled notification is the primary alert.
+            }
+            void completeSession();
             return 0;
           }
           return prev - 1;
@@ -73,12 +98,26 @@ export default function Pomodoro() {
     return () => clearInterval(intervalRef.current);
   }, [isRunning, completeSession]);
 
-  const toggleTimer = () => setIsRunning(!isRunning);
+  const toggleTimer = () => {
+    if (isRunning) {
+      setIsRunning(false);
+      cancelPomodoroNotification().catch((error) => {
+        console.error('Failed to cancel pomodoro notification', error);
+      });
+      return;
+    }
+
+    setIsRunning(true);
+    schedulePhaseNotification(secondsLeft, isBreak);
+  };
   
   const resetTimer = () => {
     setIsRunning(false);
     setIsBreak(false);
     setSecondsLeft(workMin * 60);
+    cancelPomodoroNotification().catch((error) => {
+      console.error('Failed to cancel pomodoro notification', error);
+    });
   };
 
   const selectPreset = (p) => {

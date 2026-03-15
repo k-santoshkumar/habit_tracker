@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
+import { requestNotificationAccess, syncTabletReminders } from '../lib/notifications';
+import { getTablets } from '../api/tablets';
 
 const NotificationContext = createContext();
 
@@ -12,12 +14,6 @@ export function NotificationProvider({ children }) {
     const id = Date.now();
     const newNotification = { id, title, message, type, time: new Date() };
     setNotifications(prev => [newNotification, ...prev].slice(0, 20));
-    
-    // Also show as browser notification if permission granted
-    if (Notification.permission === 'granted') {
-      new Notification(title, { body: message });
-    }
-    
     return id;
   };
 
@@ -25,15 +21,47 @@ export function NotificationProvider({ children }) {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
-  const toggleReminders = () => {
+  const toggleReminders = async () => {
     const newValue = !remindersEnabled;
+    if (newValue) {
+      const granted = await requestNotificationAccess();
+      if (!granted) {
+        return false;
+      }
+    }
+
     setRemindersEnabled(newValue);
     localStorage.setItem('remindersEnabled', newValue.toString());
-    
-    if (newValue && Notification.permission !== 'granted') {
-      Notification.requestPermission();
-    }
+    return newValue;
   };
+
+  const syncReminders = useCallback(async (tablets = null) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return;
+    }
+
+    let tabletList = tablets;
+    if (!tabletList) {
+      try {
+        const response = await getTablets();
+        tabletList = response.data.success ? response.data.data : [];
+      } catch (error) {
+        console.error('Failed to load tablets for reminder sync', error);
+        return;
+      }
+    }
+
+    try {
+      await syncTabletReminders(tabletList, remindersEnabled);
+    } catch (error) {
+      console.error('Failed to sync reminders', error);
+    }
+  }, [remindersEnabled]);
+
+  useEffect(() => {
+    void syncReminders();
+  }, [syncReminders]);
 
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -44,6 +72,7 @@ export function NotificationProvider({ children }) {
       clearNotification, 
       remindersEnabled, 
       toggleReminders,
+      syncReminders,
       showAddModal,
       setShowAddModal
     }}>
@@ -52,8 +81,4 @@ export function NotificationProvider({ children }) {
   );
 }
 
-export const useNotifications = () => {
-  const context = useContext(NotificationContext);
-  if (!context) throw new Error('useNotifications must be used within a NotificationProvider');
-  return context;
-};
+export { NotificationContext };

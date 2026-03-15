@@ -21,6 +21,7 @@ import Login from './pages/Auth/Login'
 import Register from './pages/Auth/Register'
 import Sidebar from './components/layout/Sidebar'
 import BottomNav from './components/layout/BottomNav'
+import { NotificationProvider } from './context/NotificationContext'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -86,8 +87,6 @@ function AppContent() {
     </div>
   );
 }
-
-import { NotificationProvider } from './context/NotificationContext'
 
 function App() {
   return (

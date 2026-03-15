@@ -1,6 +1,6 @@
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/useAuth';
-import { useNotifications } from '../context/NotificationContext';
+import { useNotifications } from '../context/useNotifications';
 import { useState } from 'react';
 import { updateMe } from '../api/auth';
 import { Moon, Sun, Download, Trash2, User, Mail, Lock, Bell, BellOff, CheckCircle2, ChevronRight, Loader2 } from 'lucide-react';

@@ -1,19 +1,28 @@
 import { useState } from 'react';
 import { useTablets } from '../hooks/useTablets';
 import { format } from 'date-fns';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import useLongPress from '../hooks/useLongPress';
+import { useNotifications } from '../context/useNotifications';
+import { useEffect } from 'react';
 
 export default function Tablets() {
   const [date] = useState(format(new Date(), 'yyyy-MM-dd'));
   const { tablets, logs, timings, logTablet, addTablet, deleteTablet, loading } = useTablets(date);
   const [showAdd, setShowAdd] = useState(false);
-  const [deletingId, setDeletingId] = useState(null);
   const [newTab, setNewTab] = useState({ name: '', dose: '', frequency: 'Daily', timing: 'Morning', critical: false, reminder_time: '' });
+  const { remindersEnabled, addNotification, syncReminders } = useNotifications();
+
+  useEffect(() => {
+    void syncReminders(tablets);
+  }, [tablets, syncReminders]);
 
   const handleAdd = async (e) => {
       e.preventDefault();
       await addTablet(newTab);
+      if (newTab.reminder_time && remindersEnabled) {
+          addNotification('Tablet reminder scheduled', `${newTab.name} will alert daily at ${newTab.reminder_time}.`);
+      }
       setShowAdd(false);
       setNewTab({ name: '', dose: '', frequency: 'Daily', timing: 'Morning', critical: false, reminder_time: '' });
   };
@@ -22,10 +31,9 @@ export default function Tablets() {
       if (window.confirm("Delete this tablet? This will remove all its history.")) {
           await deleteTablet(id);
       }
-      setDeletingId(null);
   };
 
-  const handleStatusClick = (tabletId, currentStatus, isLate, isMissed) => {
+  const handleStatusClick = (tabletId, currentStatus, isLate) => {
       // Auto-determine next logical status based on time
       let nextStatus = "Taken";
       if (currentStatus === "Taken" || currentStatus === "Taken late") {
@@ -163,7 +171,7 @@ export default function Tablets() {
                         displayStatus={displayStatus} 
                         isLate={isLate} 
                         isMissed={isMissed}
-                        onToggle={() => handleStatusClick(tab.id, status, isLate, isMissed)}
+                        onToggle={() => handleStatusClick(tab.id, status, isLate)}
                         onLongPress={() => handleDelete(tab.id)}
                       />
                   );
@@ -174,7 +182,7 @@ export default function Tablets() {
   )
 }
 
-function TabletItem({ tab, status, displayStatus, isLate, isMissed, onToggle, onLongPress }) {
+function TabletItem({ tab, displayStatus, onToggle, onLongPress }) {
     const longPressProps = useLongPress(
         () => onLongPress(),
         () => onToggle(),

@@ -11,14 +11,13 @@ export default function BottomNav() {
   const primaryLinks = [
     { to: '/', icon: <Home size={22} />, label: 'Home' },
     { to: '/activity', icon: <Activity size={22} />, label: 'Activity' },
-    { to: '/habits', icon: <Plus size={26} />, label: 'Add', isSpecial: true },
-    { to: '/settings', icon: <Settings size={22} />, label: 'Setting' },
+    { to: '/habits', icon: <CheckSquare size={22} />, label: 'Habits' },
+    { to: '/settings', icon: <Settings size={22} />, label: 'Settings' },
   ];
 
   const moreLinks = [
-    { to: '/habits', icon: <CheckSquare size={18} />, label: 'Habits' },
-    { to: '/tablets', icon: <Pill size={18} />, label: 'Tablets' },
     { to: '/diet', icon: <Coffee size={18} />, label: 'Diet' },
+    { to: '/study', icon: <BookOpen size={18} />, label: 'Study' },
     { to: '/study', icon: <BookOpen size={18} />, label: 'Study' },
     { to: '/health', icon: <Heart size={18} />, label: 'Health' },
     { to: '/sleep', icon: <Moon size={18} />, label: 'Sleep' },
@@ -42,7 +41,7 @@ export default function BottomNav() {
                 <NavLink key={link.to} to={link.to} onClick={() => setShowMore(false)}
                   className={({ isActive }) => `flex flex-col items-center gap-2 transition-all active:scale-95 ${isActive ? 'text-primary' : 'text-slate-400'}`}
                 >
-                  <div className={`p-4 rounded-2xl transition-all ${isActive ? 'bg-primary/10' : 'bg-slate-50 dark:bg-slate-800'}`}>
+                  <div className="p-4 rounded-2xl transition-all bg-slate-50 dark:bg-slate-800">
                     {link.icon}
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-wider">{link.label}</span>
@@ -65,7 +64,7 @@ export default function BottomNav() {
       {/* Glass Bottom Nav */}
       <nav className="fixed bottom-0 inset-x-0 z-50 glass-nav border-t border-slate-100 dark:border-white/5 pb-safe">
         <div className="flex justify-around items-center h-20 px-4">
-          {primaryLinks.slice(0, 2).map((link) => (
+          {primaryLinks.slice(0, 3).map((link) => (
             <NavLink
               key={link.to}
               to={link.to}

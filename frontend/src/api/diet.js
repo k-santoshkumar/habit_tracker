@@ -7,3 +7,4 @@ export const logDietMeal = (data) => api.post('/diet/logs/meal', data);
 export const logDietWater = (data) => api.post('/diet/logs/water', data);
 export const getDietCategories = () => api.get('/diet/categories');
 export const getFoodItems = () => api.get('/diet/food-items');
+export const deleteDietSlot = (id) => api.delete(`/diet/slots/${id}`);

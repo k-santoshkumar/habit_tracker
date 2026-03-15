@@ -59,5 +59,12 @@ export function useActivity(date) {
         }
     };
 
-    return { types, logs, suggestions, loading, addType, toggleActivity, refetch: fetchData };
+    const deleteType = async (id) => {
+        const res = await api.deleteActivityType(id);
+        if (res.data.success) {
+            setTypes(types.filter(t => t.id !== id));
+        }
+    };
+
+    return { types, logs, suggestions, loading, addType, toggleActivity, deleteType, refetch: fetchData };
 }

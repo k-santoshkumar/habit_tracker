@@ -62,5 +62,16 @@ export function useTablets(date) {
         }
     };
 
-    return { tablets, logs, timings, loading, logTablet, addTablet, refetch: fetchData };
+    const deleteTablet = async (id) => {
+        try {
+            const res = await api.deleteTablet(id);
+            if (res.data.success) {
+                setTablets(prev => prev.filter(t => t.id !== id));
+            }
+        } catch(e) {
+            console.error(e);
+        }
+    };
+
+    return { tablets, logs, timings, loading, logTablet, addTablet, deleteTablet, refetch: fetchData };
 }

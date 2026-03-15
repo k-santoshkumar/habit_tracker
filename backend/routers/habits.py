@@ -62,3 +62,12 @@ async def log_habit(log: HabitLogCreate, current_user: UserInDB = Depends(get_cu
     except Exception as e:
         print(f"Error in log_habit: {e}")
         return {"success": False, "error": str(e)}
+
+@router.delete("/{habit_id}")
+async def delete_habit(habit_id: str, current_user: UserInDB = Depends(get_current_user)):
+    try:
+        await db.habit_logs.delete_many({"habit_id": habit_id, "user_email": current_user.email})
+        await db.habits.delete_one({"_id": ObjectId(habit_id), "user_email": current_user.email})
+        return {"success": True, "data": None}
+    except Exception as e:
+        return {"success": False, "error": str(e)}

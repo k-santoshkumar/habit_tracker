@@ -101,3 +101,12 @@ async def log_water(log: WaterLogCreate, current_user: UserInDB = Depends(get_cu
     except Exception as e:
         print(f"Error in log_water: {e}")
         return {"success": False, "error": str(e)}
+
+@router.delete("/slots/{slot_id}")
+async def delete_meal_slot(slot_id: str, current_user: UserInDB = Depends(get_current_user)):
+    try:
+        await db.meal_logs.delete_many({"meal_slot_id": slot_id, "user_email": current_user.email})
+        await db.meal_slots.delete_one({"_id": ObjectId(slot_id), "user_email": current_user.email})
+        return {"success": True, "data": None}
+    except Exception as e:
+        return {"success": False, "error": str(e)}

@@ -5,3 +5,4 @@ export const createActivityType = (data) => api.post('/activity/types', data);
 export const getActivityLogs = (date) => api.get(`/activity/logs/${date}`);
 export const logActivity = (data) => api.post('/activity/logs', data);
 export const getActivitySuggestions = () => api.get('/activity/suggestions');
+export const deleteActivityType = (id) => api.delete(`/activity/types/${id}`);

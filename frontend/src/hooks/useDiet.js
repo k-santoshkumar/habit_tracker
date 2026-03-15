@@ -69,6 +69,13 @@ export function useDiet(date) {
         }
     };
 
+    const deleteSlot = async (id) => {
+        const res = await api.deleteDietSlot(id);
+        if (res.data.success) {
+            setSlots(slots.filter(s => s.id !== id));
+        }
+    };
+
     return { 
         slots, 
         mealLogs, 
@@ -79,6 +86,7 @@ export function useDiet(date) {
         logMeal, 
         addWater, 
         addSlot, 
+        deleteSlot,
         refetch: fetchData 
     };
 }

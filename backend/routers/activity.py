@@ -42,3 +42,12 @@ async def log_activity(log: ActivityLogCreate, current_user: UserInDB = Depends(
     data["user_email"] = current_user.email
     await db.activity_logs.update_one(filter_query, {"$set": data}, upsert=True)
     return {"success": True, "data": None}
+
+@router.delete("/types/{type_id}")
+async def delete_activity_type(type_id: str, current_user: UserInDB = Depends(get_current_user)):
+    try:
+        await db.activity_logs.delete_many({"activity_type_id": type_id, "user_email": current_user.email})
+        await db.activity_types.delete_one({"_id": ObjectId(type_id), "user_email": current_user.email})
+        return {"success": True, "data": None}
+    except Exception as e:
+        return {"success": False, "error": str(e)}

@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
-import { requestNotificationAccess, syncTabletReminders } from '../lib/notifications';
+import { requestNotificationAccess, syncTabletReminders } from '../utils/notifications';
 import { getTablets } from '../api/tablets';
 
 const NotificationContext = createContext();

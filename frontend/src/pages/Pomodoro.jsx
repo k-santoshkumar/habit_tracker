@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, startTransition } from 'react
 import { format } from 'date-fns';
 import { Play, Pause, RotateCcw, Coffee, Timer, Check } from 'lucide-react';
 import * as api from '../api/pomodoro';
-import { schedulePomodoroNotification, cancelPomodoroNotification } from '../lib/notifications';
+import { schedulePomodoroNotification, cancelPomodoroNotification } from '../utils/notifications';
 
 
 const PRESETS = [

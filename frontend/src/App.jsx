@@ -86,12 +86,16 @@ function AppContent() {
   );
 }
 
+import { NotificationProvider } from './context/NotificationContext'
+
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <NotificationProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </NotificationProvider>
     </AuthProvider>
   )
 }

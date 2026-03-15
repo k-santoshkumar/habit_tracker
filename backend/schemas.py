@@ -310,3 +310,26 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+class UpdateUser(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
+
+class GoalBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    target_date: Optional[str] = None
+    category: str = "General"
+    milestones: List[str] = []
+    status: str = "Active"
+
+class GoalCreate(GoalBase):
+    pass
+
+class Goal(GoalBase):
+    id: Optional[str] = None
+    progress: int = 0
+    created_at: Optional[datetime] = None
+    class Config:
+        from_attributes = True

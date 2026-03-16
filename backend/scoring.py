@@ -1,18 +1,21 @@
 from datetime import date as dt_date
 from backend.database import db
+from typing import List, Dict, Any
 import json
 
 async def calculate_daily_score(date_str: str, user_email: str):
     categories = []
 
     # 1. Tablets
-    tablets = await db.tablets.find({"user_email": user_email}).to_list(length=100)
+    tablets_query = db.tablets.find({"user_email": user_email})
+    tablets: List[Dict[str, Any]] = await tablets_query.to_list(length=100)
     if tablets:
         tablet_count = len(tablets)
         critical_count = sum(1 for t in tablets if t.get("critical", False))
         normal_count = tablet_count - critical_count
         
-        logs = await db.tablet_logs.find({"date": date_str, "user_email": user_email}).to_list(length=100)
+        logs_query = db.tablet_logs.find({"date": date_str, "user_email": user_email})
+        logs: List[Dict[str, Any]] = await logs_query.to_list(length=100)
         log_map = {str(log["tablet_id"]): log["status"] for log in logs}
         
         critical_taken = sum(1 for t in tablets if t.get("critical") and log_map.get(str(t["id"] if "id" in t else t["_id"])) in ["Taken", "Taken late"])
@@ -53,6 +56,12 @@ async def calculate_daily_score(date_str: str, user_email: str):
     if act_types_count > 0:
         act_logs_count = await db.activity_logs.count_documents({"date": date_str, "done": True, "user_email": user_email})
         categories.append(('activity', 1.0 if act_logs_count > 0 else 0.0))
+
+    # 6. Habits (New)
+    total_habits = await db.habits.count_documents({"user_email": user_email})
+    if total_habits > 0:
+        habits_done = await db.habit_logs.count_documents({"date": date_str, "completed": True, "user_email": user_email})
+        categories.append(('habits', habits_done / total_habits))
 
     if not categories:
         return 0, {}

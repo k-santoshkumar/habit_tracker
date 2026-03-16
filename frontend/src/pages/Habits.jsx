@@ -16,7 +16,7 @@ export default function Habits() {
   const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
   const fetchData = async () => {
-    setLoading(setLoading && true);
+    setLoading(true);
     try {
       const [habitsRes, logsRes, suggRes] = await Promise.all([
         api.getHabits(),

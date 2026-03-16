@@ -66,6 +66,8 @@ async def log_habit(log: HabitLogCreate, current_user: UserInDB = Depends(get_cu
 @router.delete("/{habit_id}")
 async def delete_habit(habit_id: str, current_user: UserInDB = Depends(get_current_user)):
     try:
+        if not ObjectId.is_valid(habit_id):
+            return {"success": False, "error": "Invalid habit ID format"}
         await db.habit_logs.delete_many({"habit_id": habit_id, "user_email": current_user.email})
         await db.habits.delete_one({"_id": ObjectId(habit_id), "user_email": current_user.email})
         return {"success": True, "data": None}

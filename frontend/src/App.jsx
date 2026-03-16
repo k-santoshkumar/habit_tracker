@@ -92,6 +92,8 @@ function App() {
   return (
     <AuthProvider>
       <NotificationProvider>
+        <NotificationPortal />
+        <GlobalAddModal />
         <Router>
           <AppContent />
         </Router>

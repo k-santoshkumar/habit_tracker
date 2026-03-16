@@ -134,7 +134,7 @@ class StudyHabit(StudyHabitBase):
 class HabitLogBase(BaseModel):
     date: str
     habit_id: str
-    checked: bool
+    completed: bool
 
 class HabitLogCreate(HabitLogBase):
     pass

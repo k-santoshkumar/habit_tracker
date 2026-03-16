@@ -50,6 +50,14 @@ async def register(user: UserCreate):
     
     await db.users.insert_one(user_data)
     
+    # Create default profile
+    await db.profiles.insert_one({
+        "user_email": user.email.lower(),
+        "water_target_ml": 2500,
+        "protein_target_g": 100,
+        "created_at": datetime.now()
+    })
+    
     # Create access token immediately
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(

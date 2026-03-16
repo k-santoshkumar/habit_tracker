@@ -5,8 +5,10 @@ import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import * as dsApi from '../api/dashboard';
 import { User, Bell, Flame, Timer } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [score, setScore] = useState(0)
   const [streaks, setStreaks] = useState([])
   const [heatmap, setHeatmap] = useState([])
@@ -40,11 +42,11 @@ export default function Dashboard() {
       {/* Header / User Profile */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
-                <User size={20} />
+            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-primary font-black text-sm">
+                {user?.full_name?.[0]?.toUpperCase() || 'U'}
             </div>
             <div>
-                <h2 className="text-lg">Hi, <span className="font-bold">Habit Warrior</span></h2>
+                <h2 className="text-lg">Hi, <span className="font-bold">{user?.full_name || 'Habit Warrior'}</span></h2>
             </div>
         </div>
         <button className="p-2 transition-all active:scale-90 text-slate-400">

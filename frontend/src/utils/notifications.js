@@ -1,6 +1,5 @@
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { App } from '@capacitor/app';
 
 const TABLET_NOTIFICATION_OFFSET = 100000;
 const POMODORO_NOTIFICATION_ID = 900001;
@@ -123,6 +122,7 @@ export async function openNotificationSettings() {
     if (isNative) {
         try {
             if (Capacitor.getPlatform() === 'android' || Capacitor.getPlatform() === 'ios') {
+                const { App } = await import('@capacitor/app');
                 await App.openUrl({ url: 'app-settings:' });
                 return true;
             }

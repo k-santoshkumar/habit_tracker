@@ -7,6 +7,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        globIgnores: ['**/node_modules/**/*', 'sw.js', 'workbox-*.js']
+      },
       manifest: {
         name: 'Health Tracker',
         short_name: 'HealthTracker',

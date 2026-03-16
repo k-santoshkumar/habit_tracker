@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useCallback, useContext } from 'react';
 import { requestNotificationAccess, getNotificationPermissionStatus, openNotificationSettings, syncTabletReminders } from '../utils/notifications';
 import { getTablets } from '../api/tablets';
 
@@ -113,5 +113,13 @@ export function NotificationProvider({ children }) {
     </NotificationContext.Provider>
   );
 }
+
+export const useNotifications = () => {
+  const context = useContext(NotificationContext);
+  if (!context) {
+    throw new Error('useNotifications must be used within a NotificationProvider');
+  }
+  return context;
+};
 
 export { NotificationContext };

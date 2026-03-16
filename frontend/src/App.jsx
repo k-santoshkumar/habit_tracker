@@ -46,15 +46,15 @@ function AppContent() {
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
   return (
-    <div className="flex h-screen w-full bg-[var(--bg-color)] text-[var(--text-color)]">
+    <div className="flex min-h-screen min-w-0 w-full overflow-x-hidden bg-[var(--bg-color)] text-[var(--text-color)]">
       {user && !isAuthPage && (
         <div className="hidden md:block w-64 flex-shrink-0">
           <Sidebar />
         </div>
       )}
       
-      <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
-        <div className="max-w-4xl mx-auto p-4 md:p-8">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden pb-24 md:pb-0">
+        <div className="w-full max-w-full md:max-w-4xl mx-auto p-4 md:p-8">
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

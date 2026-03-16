@@ -69,7 +69,7 @@ export default function Activity() {
                   <button className="p-1 text-slate-400"><ChevronRight size={16} /></button>
               </div>
           </div>
-          <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4 mask-fade-right">
+          <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-4 no-scrollbar px-1 sm:px-4 mask-fade-right">
               {dates.map((d, idx) => {
                   const isSelected = isSameDay(d, selectedDate);
                   return (

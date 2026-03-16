@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
-import { requestNotificationAccess, syncTabletReminders } from '../utils/notifications';
+import { requestNotificationAccess, getNotificationPermissionStatus, openNotificationSettings, syncTabletReminders } from '../utils/notifications';
 import { getTablets } from '../api/tablets';
 
 const NotificationContext = createContext();
@@ -9,6 +9,8 @@ export function NotificationProvider({ children }) {
   const [remindersEnabled, setRemindersEnabled] = useState(
     localStorage.getItem('remindersEnabled') === 'true'
   );
+  const [notificationStatus, setNotificationStatus] = useState('unknown');
+  const [exactAlarmStatus, setExactAlarmStatus] = useState('unknown');
 
   const addNotification = (title, message, type = 'info') => {
     const id = Date.now();
@@ -26,14 +28,37 @@ export function NotificationProvider({ children }) {
     if (newValue) {
       const granted = await requestNotificationAccess();
       if (!granted) {
+        addNotification('Notification permission required', 'Please allow notifications to use reminders.', 'error');
         return false;
       }
     }
 
     setRemindersEnabled(newValue);
     localStorage.setItem('remindersEnabled', newValue.toString());
+
+    await refreshNotificationStatus();
     return newValue;
   };
+
+  const openSettings = async () => {
+    const opened = await openNotificationSettings();
+    if (!opened) {
+      addNotification('Open settings failed', 'Please open your device settings manually and enable notifications.', 'error');
+    }
+    return opened;
+  };
+
+  const refreshNotificationStatus = useCallback(async () => {
+    try {
+      const status = await getNotificationPermissionStatus();
+      setNotificationStatus(status.status);
+      setExactAlarmStatus(status.exact);
+    } catch (error) {
+      console.error('Failed to read notification status', error);
+      setNotificationStatus('unknown');
+      setExactAlarmStatus('unknown');
+    }
+  }, []);
 
   const syncReminders = useCallback(async (tablets = null) => {
     const token = localStorage.getItem('token');
@@ -60,6 +85,10 @@ export function NotificationProvider({ children }) {
   }, [remindersEnabled]);
 
   useEffect(() => {
+    void refreshNotificationStatus();
+  }, [refreshNotificationStatus]);
+
+  useEffect(() => {
     void syncReminders();
   }, [syncReminders]);
 
@@ -73,6 +102,10 @@ export function NotificationProvider({ children }) {
       remindersEnabled, 
       toggleReminders,
       syncReminders,
+      notificationStatus,
+      exactAlarmStatus,
+      refreshNotificationStatus,
+      openSettings,
       showAddModal,
       setShowAddModal
     }}>

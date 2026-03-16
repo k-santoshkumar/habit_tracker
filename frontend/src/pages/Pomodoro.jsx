@@ -22,6 +22,12 @@ export default function Pomodoro() {
   const [sessions, setSessions] = useState([]);
   const [stats, setStats] = useState({ total_sessions: 0, total_minutes: 0, today_sessions: 0 });
   const intervalRef = useRef(null);
+  const notificationAudioRef = useRef(null);
+
+  useEffect(() => {
+      notificationAudioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbsGczIVOj3OsGfTIjOY+91OkFeTQrR4i0yeBIaC03SIMAAAA=');
+      notificationAudioRef.current.preload = 'auto';
+  }, []);
 
   const schedulePhaseNotification = useCallback((durationSeconds, breakMode = isBreak) => {
     const endsAt = new Date(Date.now() + (durationSeconds * 1000));
@@ -80,11 +86,13 @@ export default function Pomodoro() {
         setSecondsLeft((prev) => {
           if (prev <= 1) {
             clearInterval(intervalRef.current);
-            // Play a notification sound
-            try {
-              new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbsGczIVOj3OsGfTIjOY+91OkFeTQrR4i0yeBIaC03SIMAAAA=').play();
-            } catch {
-              // Ignore audio playback failures; the scheduled notification is the primary alert.
+            // Play a notification sound if allowed by browser/device policies.
+            const sound = notificationAudioRef.current;
+            if (sound) {
+              sound.currentTime = 0;
+              sound.play().catch((audioError) => {
+                console.warn('Pomodoro sound playback blocked or unavailable', audioError);
+              });
             }
             void completeSession();
             return 0;

@@ -3,12 +3,12 @@ import { useAuth } from '../context/useAuth';
 import { useNotifications } from '../context/useNotifications';
 import { useState } from 'react';
 import { updateMe } from '../api/auth';
-import { Moon, Sun, Download, Trash2, User, Mail, Lock, Bell, BellOff, CheckCircle2, ChevronRight, Loader2 } from 'lucide-react';
+import { Moon, Sun, User, Mail, Lock, Bell, BellOff, CheckCircle2, Loader2 } from 'lucide-react';
 
 export default function Settings() {
   const { isDark, setIsDark } = useTheme();
   const { user, setUser } = useAuth();
-  const { remindersEnabled, toggleReminders, addNotification } = useNotifications();
+  const { remindersEnabled, toggleReminders, addNotification, notificationStatus, exactAlarmStatus, refreshNotificationStatus, openSettings } = useNotifications();
   
   const [profile, setProfile] = useState({
       full_name: user?.full_name || '',
@@ -140,15 +140,16 @@ export default function Settings() {
               </div>
 
               {/* Notifications */}
-              <div className="p-5 flex items-center justify-between">
+              <div className="p-5 space-y-3">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-2xl ${remindersEnabled ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
-                          {remindersEnabled ? <Bell size={20} /> : <BellOff size={20} />}
-                      </div>
-                      <div>
-                          <p className="font-bold text-sm">Reminders</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Push Notifications</p>
-                      </div>
+                    <div className={`p-3 rounded-2xl ${remindersEnabled ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
+                      {remindersEnabled ? <Bell size={20} /> : <BellOff size={20} />}
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">Reminders</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Push Notifications</p>
+                    </div>
                   </div>
                   <button 
                       onClick={toggleReminders}
@@ -156,39 +157,25 @@ export default function Settings() {
                   >
                       <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${remindersEnabled ? 'left-7' : 'left-1'}`} />
                   </button>
-              </div>
-          </div>
-      </section>
+                </div>
 
-      {/* Data Management */}
-      <section className="space-y-4">
-          <h3 className="section-title">Data & Security</h3>
-          <div className="card overflow-hidden">
-              <button className="w-full flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                  <div className="flex items-center gap-4">
-                      <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl text-slate-400">
-                          <Download size={20} />
-                      </div>
-                      <div className="text-left">
-                          <p className="font-bold text-sm">Export My Hub</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">JSON Format</p>
-                      </div>
-                  </div>
-                  <ChevronRight size={18} className="text-slate-300" />
-              </button>
-              
-              <button className="w-full flex items-center justify-between p-5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors border-t border-slate-50 dark:border-slate-800">
-                  <div className="flex items-center gap-4">
-                      <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-2xl">
-                          <Trash2 size={20} />
-                      </div>
-                      <div className="text-left">
-                          <p className="font-bold text-sm text-red-600">Factory Reset</p>
-                          <p className="text-[10px] opacity-70 font-bold uppercase tracking-tight">Irreversible</p>
-                      </div>
-                  </div>
-                  <ChevronRight size={18} className="opacity-30" />
-              </button>
+                <div className="text-xs text-slate-500 space-y-1">
+                  <div>Status: <span className="font-bold text-slate-700 dark:text-slate-200">{notificationStatus}</span></div>
+                  <div>Exact alarm: <span className="font-bold text-slate-700 dark:text-slate-200">{exactAlarmStatus}</span></div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 items-center">
+                  <button onClick={refreshNotificationStatus} className="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] font-bold">Check Permission</button>
+                  <button onClick={openSettings} className="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] font-bold">Open Settings</button>
+                </div>
+
+                {notificationStatus === 'denied' && (
+                  <p className="text-[10px] text-red-500">Notifications blocked. Please allow them in system settings.</p>
+                )}
+                {notificationStatus === 'prompt' && (
+                  <p className="text-[10px] text-amber-500">Notifications are not granted yet. Toggle to enable.</p>
+                )}
+              </div>
           </div>
       </section>
       

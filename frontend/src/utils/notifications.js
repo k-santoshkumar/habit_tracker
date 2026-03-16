@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { App } from '@capacitor/app';
 
 const TABLET_NOTIFICATION_OFFSET = 100000;
 const POMODORO_NOTIFICATION_ID = 900001;
@@ -39,7 +40,11 @@ async function ensureNativePermissions() {
         return permissions;
     }
 
-    return LocalNotifications.requestPermissions();
+    const request = await LocalNotifications.requestPermissions();
+
+    // On Android 13+ this may require that POST_NOTIFICATIONS is in AndroidManifest
+    // and user must allow notifications manually in settings if previously denied.
+    return request;
 }
 
 async function ensureExactAlarmPermission() {
@@ -52,20 +57,27 @@ async function ensureExactAlarmPermission() {
         return;
     }
 
-    await LocalNotifications.changeExactNotificationSetting();
+    try {
+        await LocalNotifications.changeExactNotificationSetting();
+    } catch (error) {
+        console.warn('Exact alarm setting request failed or not available:', error);
+    }
 }
 
 export async function requestNotificationAccess() {
     if (isNative) {
         const permissions = await ensureNativePermissions();
-        if (permissions.display !== 'granted') {
+        if (!permissions || permissions.display !== 'granted') {
+            console.warn('Notification permission not granted', permissions);
             return false;
         }
+
         await ensureExactAlarmPermission();
         return true;
     }
 
     if (!('Notification' in window)) {
+        console.warn('Browser does not support Notification API');
         return false;
     }
 
@@ -74,7 +86,62 @@ export async function requestNotificationAccess() {
     }
 
     const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+        console.warn('Browser notification permission denied:', permission);
+    }
     return permission === 'granted';
+}
+
+export async function getNotificationPermissionStatus() {
+    if (isNative) {
+        const permissions = await LocalNotifications.checkPermissions();
+        const exactInfo = await LocalNotifications.checkExactNotificationSetting().catch(() => null);
+
+        if (!permissions || !permissions.display) {
+            return { status: 'prompt', exact: exactInfo?.value || 'unknown' };
+        }
+
+        if (permissions.display === 'granted') {
+            return { status: 'granted', exact: exactInfo?.value || 'unknown' };
+        }
+
+        if (permissions.display === 'denied') {
+            return { status: 'denied', exact: exactInfo?.value || 'unknown' };
+        }
+
+        return { status: permissions.display, exact: exactInfo?.value || 'unknown' };
+    }
+
+    if (!('Notification' in window)) {
+        return { status: 'unsupported', exact: 'unsupported' };
+    }
+
+    return { status: Notification.permission, exact: 'n/a' };
+}
+
+export async function openNotificationSettings() {
+    if (isNative) {
+        try {
+            if (Capacitor.getPlatform() === 'android' || Capacitor.getPlatform() === 'ios') {
+                await App.openUrl({ url: 'app-settings:' });
+                return true;
+            }
+        } catch (error) {
+            console.warn('Failed to open app settings:', error);
+            return false;
+        }
+    }
+
+    if (typeof window !== 'undefined') {
+        try {
+            window.alert('Please enable notifications in your browser settings.');
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    return false;
 }
 
 export async function showInstantNotification(title, body) {

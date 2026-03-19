@@ -39,6 +39,20 @@ export default {
       boxShadow: {
         'premium': '0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 10px -2px rgba(0, 0, 0, 0.02)',
         'active': '0 10px 30px -5px rgba(59, 130, 246, 0.2)',
+      },
+      zIndex: {
+        'nav': '50',
+        'overlay': '60',
+        'modal': '70',
+        'toast': '100',
+      },
+      keyframes: {
+        shimmer: {
+          '100%': { transform: 'translateX(100%)' }
+        }
+      },
+      animation: {
+        shimmer: 'shimmer 1.5s infinite'
       }
     },
   },

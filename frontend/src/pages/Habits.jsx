@@ -10,7 +10,7 @@ export default function Habits() {
   const [logs, setLogs] = useState({});
   const [suggestions, setSuggestions] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [newHabit, setNewHabit] = useState({ name: '', description: '', days: ['Mo', 'Tu', 'We', 'Th', 'Fr'] });
+  const [newHabit, setNewHabit] = useState({ name: '', description: '', days: ['Mo', 'Tu', 'We', 'Th', 'Fr'], startDate: '', endDate: '' });
   const [loading, setLoading] = useState(true);
 
   const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
@@ -38,8 +38,14 @@ export default function Habits() {
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    await api.createHabit({ name: newHabit.name, description: newHabit.description });
-    setNewHabit({ name: '', description: '', days: ['Mo', 'Tu', 'We', 'Th', 'Fr'] });
+    await api.createHabit({ 
+      name: newHabit.name, 
+      description: newHabit.description,
+      frequency_days: newHabit.days,
+      start_date: newHabit.startDate || date,
+      end_date: newHabit.endDate || null
+    });
+    setNewHabit({ name: '', description: '', days: ['Mo', 'Tu', 'We', 'Th', 'Fr'], startDate: '', endDate: '' });
     setShowAdd(false);
     fetchData();
   };
@@ -154,12 +160,24 @@ export default function Habits() {
 
                       <div className="space-y-4">
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Set date</label>
-                          <div className="card p-4 flex items-center justify-between border-slate-100">
-                             <div className="flex items-center gap-3">
-                                 <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-primary rounded-lg font-bold text-[10px]">Starting date</div>
+                          <div className="card p-2 flex items-center justify-between border-slate-200 dark:border-slate-700">
+                             <div className="flex-1">
+                                 <input 
+                                     type="date" 
+                                     value={newHabit.startDate}
+                                     onChange={e => setNewHabit({...newHabit, startDate: e.target.value})}
+                                     className="w-full text-center p-2 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg font-bold text-xs border border-transparent focus:border-primary outline-none cursor-pointer" 
+                                 />
                              </div>
-                             <div className="rotate-90 md:rotate-0 text-slate-300">→</div>
-                             <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-400 uppercase">Ending date</div>
+                             <div className="text-slate-400 dark:text-slate-500 font-bold px-2">→</div>
+                             <div className="flex-1">
+                                 <input 
+                                     type="date" 
+                                     value={newHabit.endDate}
+                                     onChange={e => setNewHabit({...newHabit, endDate: e.target.value})}
+                                     className="w-full text-center p-2 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg font-bold text-xs border border-transparent focus:border-primary outline-none cursor-pointer" 
+                                 />
+                             </div>
                           </div>
                       </div>
 

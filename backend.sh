@@ -5,7 +5,7 @@ set -e
 export PYTHONPATH=$PYTHONPATH:.
 
 echo "Starting Health Tracker Backend..."
-# Run in foreground so Render knows the app is alive. 
+# Run in foreground so Render knows the app is alive. chtyi7f
 # Use the system python (which has dependencies from requirements.txt)
 # backend/venv/bin/python -m backend.main
 python -m backend.main
